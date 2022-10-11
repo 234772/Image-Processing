@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -12,7 +13,7 @@ namespace Image_Processor
     {
         public static Bitmap image1;
 
-        public static int Truncate(int a)
+        public static int Truncate(int a) 
         {
             if (a > 255)
                 return 255;
@@ -22,12 +23,14 @@ namespace Image_Processor
                 return a;
         }
 
-        public static void Main()
+        public static void Main() 
         {
-            image1 = new Bitmap(@"D:\Programming\Projects\Image-Processing\Image Processor\baboon.bmp", false);
+            string projectPath = Directory.GetCurrentDirectory();
+            string path = Path.GetFullPath(Path.Combine(projectPath, @"..\..\..\"));
+            image1 = new Bitmap(path + "baboon.bmp", false);
             var image2 = new Bitmap(image1.Width, image1.Height);
 
-            for(int i = 0; i < image1.Height; i++)
+            for (int i = 0; i < image1.Height; i++)
             {
                 for (int j = 0; j < image1.Width; j++)
                 {
@@ -37,7 +40,7 @@ namespace Image_Processor
                     //Console.WriteLine(image1.GetPixel(j, i) + " " + image1.GetPixel(j, i).GetBrightness());
                 }
             }
-            image2.Save("baboon2.bmp");
+            image2.Save(path + "baboon2.bmp");
             Console.WriteLine("Done");
             Console.ReadLine();
         }
