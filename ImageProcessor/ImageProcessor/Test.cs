@@ -22,7 +22,7 @@ namespace Image_Processor
                 return a;
         }
 
-        public static void Main()
+        static void Main()
         {
             image1 = new Bitmap(@"D:\Programming\Projects\Image-Processing\Image Processor\baboon.bmp", false);
             var image2 = new Bitmap(image1.Width, image1.Height);
