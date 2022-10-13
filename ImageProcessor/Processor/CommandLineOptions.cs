@@ -14,6 +14,8 @@ namespace Processor
         public string loadPath { get; set; }
         [Value(index: 1, Required = true, HelpText = "Full path to where you want to save the image", Default = "@C:\\")]
         public string savePath { get; set; }
+        [Option(shortName: 'b', longName: "brightness", Required = false, HelpText = "Increase or decrease brightness of the image, by passing in a number 0-255", Default = 0)]
+        public int brightness { get; set; }
 
         //[Option(shortName: 'c', longName: "confidence", Required = false, HelpText = "Minimum confidence.", Default = 0.9f)]
         //public string Confidence { get; set; }

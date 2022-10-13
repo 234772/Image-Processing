@@ -9,10 +9,10 @@ namespace Processor
 {
     public class ImageHandler : IImageHandler
     {
+        private Bitmap bmp = null;
+        public Bitmap Bmp { get { return bmp; } set { bmp = value; } }
         public  Bitmap loadImage(string path)
         {
-            Bitmap bmp = null;
-            //if (path == null) throw new ArgumentException("test");
             try 
             {
                 bmp = new Bitmap(path);
@@ -24,9 +24,9 @@ namespace Processor
             return bmp;
         }
 
-        public void saveImage(string path, Bitmap image)
+        public void saveImage(string path)
         {
-            image.Save(path);
+            bmp.Save(path);
         }
     }
 }
