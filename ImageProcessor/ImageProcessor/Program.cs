@@ -12,13 +12,14 @@ namespace Presentation
     {
         public static void Main(string[] args)
         {
-            //ImageHandler ih = new ImageHandler();
             Parser.Default.ParseArguments<CommandLineOptions>(args)
                    .WithParsed<CommandLineOptions>(o =>
                    {
                        ImageProcessor.Ih.loadImage(o.loadPath);
                        //ImageProcessor.ChangeBrightness(o.brightness);
-                       ImageProcessor.NegativeImage();
+                       //ImageProcessor.NegativeImage();
+                       //ImageProcessor.ShrinkImage();
+                       ImageProcessor.BilinearResizing(2000, 2000);
                        ImageProcessor.Ih.saveImage(o.savePath);
                    });
             Console.ReadLine();
