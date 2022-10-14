@@ -17,9 +17,12 @@ namespace Presentation
                    .WithParsed<CommandLineOptions>(o =>
                    {
                        ImageProcessor.Ih.loadImage(o.loadPath);
-                       //ImageProcessor.ChangeBrightness(o.brightness);
-                       ImageProcessor.NegativeImage();
-                       ImageProcessor.Ih.saveImage(o.savePath);
+                       if (ImageProcessor.Ih.Bmp != null)
+                       {
+                            //ImageProcessor.ChangeBrightness(o.brightness);
+                            ImageProcessor.NegativeImage();
+                            ImageProcessor.Ih.saveImage(o.savePath);
+                       }
                    });
             Console.ReadLine();
         }

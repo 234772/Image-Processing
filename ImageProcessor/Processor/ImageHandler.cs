@@ -17,16 +17,24 @@ namespace Processor
             {
                 bmp = new Bitmap(path);
             }
-            catch(ArgumentException e)
+            catch(ArgumentException)
             {
-                Console.WriteLine(e.Message);
+                Console.WriteLine("Load file: Path \"" + path + "\" does not exist");
+                return null;
             }
             return bmp;
         }
 
         public void saveImage(string path)
         {
+            try
+            {
             bmp.Save(path);
+            }
+            catch(ArgumentException)
+            {
+                Console.WriteLine("Write file: \"" + path + "\" does not exist");
+            }
         }
     }
 }
