@@ -24,37 +24,30 @@ namespace Processor
         }
         public static void ChangeBrightness(int changeValue)
         {
-            Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
-
-            for(int y = 0; y < bmp.Height; y++)
+            for(int y = 0; y < ih.Bmp.Height; y++)
             {
-                for(int x = 0; x < bmp.Width; x++)
+                for(int x = 0; x < ih.Bmp.Width; x++)
                 {
                     Color color = ih.Bmp.GetPixel(y, x);
                     Color newColor = Color.FromArgb(Truncate(color.R + changeValue), Truncate(color.G + changeValue), Truncate(color.B + changeValue));
                     //Console.WriteLine(color.ToString());
-                    bmp.SetPixel(y, x, newColor);
+                    ih.Bmp.SetPixel(y, x, newColor);
                 }
             }
-
-            ih.Bmp = bmp;
         }
         public static void NegativeImage()
         {
-            Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
-
-            for(int y = 0; y < bmp.Height; y++)
+            for(int y = 0; y < ih.Bmp.Height; y++)
             {
-                for(int x = 0; x < bmp.Width; x++)
+                for(int x = 0; x < ih.Bmp.Width; x++)
                 {
                     Color color = ih.Bmp.GetPixel(y, x);
                     Color newColor = Color.FromArgb(255 - color.R, 255 - color.G, 255 - color.B);
                     //Console.WriteLine(color.ToString());
-                    bmp.SetPixel(y, x, newColor);
+                    ih.Bmp.SetPixel(y, x, newColor);
                 }
             }
-
-            ih.Bmp = bmp;
         }
+ 
     }
 }
