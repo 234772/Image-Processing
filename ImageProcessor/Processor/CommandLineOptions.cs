@@ -20,6 +20,8 @@ namespace Processor
         public int contrast { get; set; }
         [Option(shortName: 'n', longName: "negative", Required = false, HelpText = "Increase or decrease brightness of the image, by passing in a number 0-255", Default = true)]
         public bool negative { get; set; }
+        //[Option(shortName: 'h', longName: "horizontal flip", Required = false, HelpText = "Horizontal flip", Default = 0)]
+        //public bool horizontalFlip { get; set; }
         //[Option(shortName: 'c', longName: "confidence", Required = false, HelpText = "Minimum confidence.", Default = 0.9f)]
         //public string Confidence { get; set; }
     }

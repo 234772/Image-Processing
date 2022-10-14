@@ -15,7 +15,7 @@ namespace Processor
 
         public static int Truncate(int pixelValue)
         {
-            if (pixelValue > 255)
+            if(pixelValue > 255)
                 return 255;
             else if (pixelValue < 0)
                 return 0;
@@ -32,7 +32,7 @@ namespace Processor
                 {
                     Color color = ih.Bmp.GetPixel(y, x);
                     Color newColor = Color.FromArgb(Truncate(color.R + changeValue), Truncate(color.G + changeValue), Truncate(color.B + changeValue));
-                    Console.WriteLine(color.ToString());
+                    //Console.WriteLine(color.ToString());
                     bmp.SetPixel(y, x, newColor);
                 }
             }
@@ -43,13 +43,13 @@ namespace Processor
         {
             Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
 
-            for (int y = 0; y < bmp.Height; y++)
+            for(int y = 0; y < bmp.Height; y++)
             {
-                for (int x = 0; x < bmp.Width; x++)
+                for(int x = 0; x < bmp.Width; x++)
                 {
                     Color color = ih.Bmp.GetPixel(y, x);
                     Color newColor = Color.FromArgb(255 - color.R, 255 - color.G, 255 - color.B);
-                    Console.WriteLine(color.ToString());
+                    //Console.WriteLine(color.ToString());
                     bmp.SetPixel(y, x, newColor);
                 }
             }
