@@ -27,6 +27,8 @@ namespace Processor
         public bool hflip { get; set; }
         [Option(shortName: 'v', longName: "vflip", Required = false, HelpText = "Flips the image vertically", Default = false)]
         public bool vflip { get; set; }
+        [Option(shortName: 'd', longName: "dflip", Required = false, HelpText = "Flips the image diagonally", Default = false)]
+        public bool dflip { get; set; }
 
     }
 }
