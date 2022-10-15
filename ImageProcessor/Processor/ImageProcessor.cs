@@ -158,21 +158,8 @@ namespace Processor
         }
         public static void DiagonalFlip()
         {
-            Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
-            int pixel1 = 0;
-            int pixel2 = 0;
-
-            for (int y = ih.Bmp.Height - 1; y > 0; y--)
-            {
-                for (int x = ih.Bmp.Width - 1; x > 0; x--)
-                {
-                    bmp.SetPixel(pixel1, pixel2, ih.Bmp.GetPixel(x, y));
-                    pixel1++;
-                }
-                pixel1 = 0;
-                pixel2++;
-            }
-            ih.Bmp = bmp;
+            HorizontalFlip();
+            VerticalFlip();
         }
     }
 }

@@ -24,8 +24,8 @@ namespace Presentation
                        Console.WriteLine(projectPath + "\\" + o.loadPath);
                        if (ImageProcessor.Ih.Bmp != null)
                        {
-                            ImageProcessor.VerticalFlip();
-                            ImageProcessor.Ih.saveImage(projectPath + "\\" + o.savePath);
+                           ImageProcessor.DiagonalFlip();
+                           ImageProcessor.Ih.saveImage(projectPath + "\\" + o.savePath);
                        }
                    });
             Console.ReadLine();
