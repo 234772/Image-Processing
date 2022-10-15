@@ -20,7 +20,8 @@ namespace Presentation
                        ImageProcessor.Ih.loadImage(o.loadPath);
                        //ImageProcessor.BilinearResizing(100, 100);
                        //ImageProcessor.HorizontalFlip();
-                       //ImageProcessor.VerticalFlip();
+                       ImageProcessor.VerticalFlip();
+                       //ImageProcessor.DiagonalFlip();
                        Console.WriteLine(projectPath + "\\" + o.loadPath);
                        if (ImageProcessor.Ih.Bmp != null)
                        {
