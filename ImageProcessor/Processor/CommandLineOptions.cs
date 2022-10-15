@@ -25,6 +25,8 @@ namespace Processor
         public int height { get; set; }
         [Option(shortName: 'h', longName: "hflip", Required = false, HelpText = "Horizontally flips the image (mirrors it)", Default = false)]
         public bool hflip { get; set; }
+        [Option(shortName: 'v', longName: "vflip", Required = false, HelpText = "Flips the image vertically", Default = false)]
+        public bool vflip { get; set; }
 
     }
 }
