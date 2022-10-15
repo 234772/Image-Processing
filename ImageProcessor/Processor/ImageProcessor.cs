@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
@@ -126,7 +128,7 @@ namespace Processor
                 }
             ih.Bmp = b;
         }
-         public static void HorizontalFlip()
+        public static void HorizontalFlip()
         {
             Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
             int horizontalPixel = 0;
@@ -173,6 +175,161 @@ namespace Processor
                 pixel2++;
             }
             ih.Bmp = bmp;
+        }
+        public static void Contrast()
+        {
+            Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
+
+            byte lowPixel = 255;
+            byte highPixel = 0;
+
+            for(int i = 0; i < ih.Bmp.Height; i++)
+            {
+                for(int j = 0; j < ih.Bmp.Width; j++)
+                {
+                    if(lowPixel > ih.Bmp.GetPixel(i, j).B)
+                        lowPixel = ih.Bmp.GetPixel(i, j).B;
+                    if(highPixel < ih.Bmp.GetPixel(i, j).B)
+                        highPixel = ih.Bmp.GetPixel(i, j).B;
+                }
+            }
+
+            for (int i = 0; i < ih.Bmp.Height; i++)
+            {
+                for (int j = 0; j < ih.Bmp.Width; j++)
+                {
+                    var contrastPixel = (ih.Bmp.GetPixel(j, i).B - lowPixel) * ((255 - 0) / (highPixel - lowPixel)) + 0;
+                    Color color = Color.FromArgb(contrastPixel, contrastPixel, contrastPixel);
+                    bmp.SetPixel(j, i, color);
+                }
+            }
+            ih.Bmp = bmp;
+        }
+        public static void Contrast2()
+        {
+            int width = ih.Bmp.Width;
+            int height = ih.Bmp.Height;
+
+            Bitmap bmp = new Bitmap(width, height);
+
+            double[] probability = new double[256];
+            double[] probabilityR = new double[256];
+            double[] probabilityG = new double[256];
+            double[] probabilityB = new double[256];
+
+            byte[,] intensity = new byte[width, height];
+            byte[,] r = new byte[width, height];
+            byte[,] g = new byte[width, height];
+            byte[,] b = new byte[width, height];
+
+            for (int i = 0; i < height; i++)
+            {
+                for(int j = 0; j < width; j++)
+                {
+                    r[i, j] = (byte)ih.Bmp.GetPixel(i, j).R;
+                    g[i, j] = (byte)ih.Bmp.GetPixel(i, j).G;
+                    b[i, j] = (byte)ih.Bmp.GetPixel(i, j).B;
+
+                    intensity[i, j] = (byte)((r[i, j] + g[i, j] + b[i, j]) / 3);
+
+                    //Console.Write(r[j, i] + " " + g[j, i] + " " + b[j, i] + " " + intensity[j, i]);
+                    //Console.WriteLine();
+                }
+            }
+
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    probability[intensity[i, j]]++;
+                    probabilityR[r[i, j]]++;
+                    probabilityG[g[i, j]]++;
+                    probabilityB[b[i, j]]++;
+                }
+            }
+
+            for(int i = 0; i < probability.Length; i++)
+            {
+                probability[i] /= (width * height);
+                probabilityR[i] /= (width * height);
+                probabilityG[i] /= (width * height);
+                probabilityB[i] /= (width * height);
+            }
+
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    double sum = 0;
+                    double sumR = 0;
+                    double sumG = 0;
+                    double sumB = 0;
+
+                    for (int x = 0; x < intensity[i, j]; x++)
+                    {
+                        sum += probability[x];
+                    }
+                    for (int x = 0; x < r[i, j]; x++)
+                    {
+                        sumR += probabilityR[x];
+                    }
+                    for (int x = 0; x < g[i, j]; x++)
+                    {
+                        sumG += probabilityG[x];
+                    }
+                    for (int x = 0; x < b[i, j]; x++)
+                    {
+                        sumB += probabilityB[x];
+                    }
+                    bmp.SetPixel(i, j, Color.FromArgb((byte)(Math.Floor(255 * sumR)), (byte)(Math.Floor(255 * sumG)), (byte)(Math.Floor(255 * sumB))));
+                }
+            }
+            ih.Bmp = bmp;
+        }
+        public static void Contrast3()
+        {
+            int w = ih.Bmp.Width;
+            int h = ih.Bmp.Height;
+            BitmapData sd = ih.Bmp.LockBits(new Rectangle(0, 0, w, h),
+                ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            int bytes = sd.Stride * sd.Height;
+            byte[] buffer = new byte[bytes];
+            byte[] result = new byte[bytes];
+            Marshal.Copy(sd.Scan0, buffer, 0, bytes);
+            ih.Bmp.UnlockBits(sd);
+            int current = 0;
+            double[] pn = new double[256];
+            for (int p = 0; p < bytes; p += 4)
+            {
+                pn[buffer[p]]++;
+            }
+            for (int prob = 0; prob < pn.Length; prob++)
+            {
+                pn[prob] /= (w * h);
+            }
+            for (int y = 0; y < h; y++)
+            {
+                for (int x = 0; x < w; x++)
+                {
+                    current = y * sd.Stride + x * 4;
+                    double sum = 0;
+                    for (int i = 0; i < buffer[current]; i++)
+                    {
+                        sum += pn[i];
+                    }
+                    for (int c = 0; c < 3; c++)
+                    {
+                        result[current + c] = (byte)Math.Floor(255 * sum);
+                    }
+                    result[current + 3] = 255;
+                }
+            }
+            Bitmap res = new Bitmap(w, h);
+            BitmapData rd = res.LockBits(new Rectangle(0, 0, w, h),
+                ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
+            Marshal.Copy(result, 0, rd.Scan0, bytes);
+            res.UnlockBits(rd);
+            ih.Bmp = res;
         }
     }
 }
