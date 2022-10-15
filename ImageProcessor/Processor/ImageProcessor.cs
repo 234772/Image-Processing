@@ -13,7 +13,7 @@ namespace Processor
         private static ImageHandler ih = new ImageHandler();
         public static ImageHandler Ih { get { return ih; } }
 
-        public static int Truncate(int pixelValue)
+        private static int Truncate(int pixelValue)
         {
             if(pixelValue > 255)
                 return 255;
@@ -125,6 +125,25 @@ namespace Processor
                     b.SetPixel(x, y, Color.FromArgb(255, red, green, blue));
                 }
             ih.Bmp = b;
+        }
+        public static void HorizontalFlip()
+        {
+            Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
+            int pixel1 = 0;
+            int pixel2 = 0;
+
+            for (int y = 0; y < ih.Bmp.Height; y++)
+            {
+                for (int x = ih.Bmp.Width - 1; x > 0; x--)
+                {
+                    bmp.SetPixel(pixel1, pixel2, ih.Bmp.GetPixel(x, y));
+                    //Console.WriteLine(pixel1);
+                    pixel1++;
+                }
+                pixel1 = 0;
+                pixel2++;
+            }
+            ih.Bmp = bmp;
         }
     }
 }

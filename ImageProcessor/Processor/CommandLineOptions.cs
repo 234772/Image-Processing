@@ -21,8 +21,10 @@ namespace Processor
         [Option(shortName: 'n', longName: "negative", Required = false, HelpText = "Increase or decrease brightness of the image, by passing in a number 0-255", Default = true)]
         public bool negative { get; set; }
         [Option(shortName: 'r', longName: "resize", Required = false, HelpText = "Change image size to a new one (width x height)")]
-        public int resize { get; set; }
-        //[Option(shortName: 'c', longName: "confidence", Required = false, HelpText = "Minimum confidence.", Default = 0.9f)]
-        //public string Confidence { get; set; }
+        public int width { get; set; }
+        public int height { get; set; }
+        [Option(shortName: 'h', longName: "hflip", Required = false, HelpText = "Horizontally flips the image (mirrors it)", Default = false)]
+        public bool hflip { get; set; }
+
     }
 }

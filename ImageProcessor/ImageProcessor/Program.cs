@@ -18,11 +18,12 @@ namespace Presentation
                    .WithParsed<CommandLineOptions>(o =>
                    {
                        ImageProcessor.Ih.loadImage(o.loadPath);
-                       ImageProcessor.BilinearResizing(2000, 2000);
-                       Console.WriteLine(projectPath + "/" + o.loadPath);
+                       //ImageProcessor.BilinearResizing(100, 100);
+                       ImageProcessor.HorizontalFlip();
+                       Console.WriteLine(projectPath + "\\" + o.loadPath);
                        if (ImageProcessor.Ih.Bmp != null)
                        {
-                            ImageProcessor.Ih.saveImage(projectPath + "/" + o.savePath);
+                            ImageProcessor.Ih.saveImage(projectPath + "\\" + o.savePath);
                        }
                    });
             Console.ReadLine();
