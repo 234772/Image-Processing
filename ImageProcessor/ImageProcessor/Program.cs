@@ -21,10 +21,10 @@ namespace Presentation
                        //ImageProcessor.BilinearResizing(100, 100);
                        //ImageProcessor.HorizontalFlip();
                        //ImageProcessor.VerticalFlip();
-                       ImageProcessor.DiagonalFlip();
                        Console.WriteLine(projectPath + "\\" + o.loadPath);
                        if (ImageProcessor.Ih.Bmp != null)
                        {
+                            ImageProcessor.VerticalFlip();
                             ImageProcessor.Ih.saveImage(projectPath + "\\" + o.savePath);
                        }
                    });

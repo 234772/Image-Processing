@@ -129,32 +129,30 @@ namespace Processor
          public static void HorizontalFlip()
         {
             Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
-            int pixelPtr = 0;
+            int horizontalPixel = 0;
+
             for (int y = 0; y < bmp.Height - 1; y++)
             {
                 for(int x = bmp.Width - 1; x >= 0 ; x--)
                 {
-                    bmp.SetPixel(pixelPtr++,y,ih.Bmp.GetPixel(x, y));
+                    bmp.SetPixel(horizontalPixel++,y,ih.Bmp.GetPixel(x, y));
                 }
-                pixelPtr = 0;
+                horizontalPixel = 0;
             }
             ih.Bmp = bmp;
         }
         public static void VerticalFlip()
         {
             Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
-            int pixel1 = 0;
-            int pixel2 = 0;
+            int verticalPixel = 0;
 
-            for (int y = ih.Bmp.Height - 1; y > 0; y--)
+            for (int x = 0; x < ih.Bmp.Width - 1; x++)
             {
-                for (int x = 0; x < ih.Bmp.Width; x++)
+                for (int y = ih.Bmp.Height - 1; y >=0; y--)
                 {
-                    bmp.SetPixel(pixel1, pixel2, ih.Bmp.GetPixel(x, y));
-                    pixel1++;
+                    bmp.SetPixel(x, verticalPixel++, ih.Bmp.GetPixel(x, y));
                 }
-                pixel1 = 0;
-                pixel2++;
+                verticalPixel = 0;
             }
             ih.Bmp = bmp;
         }
