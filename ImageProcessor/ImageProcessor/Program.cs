@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Diagnostics;
 
 namespace Presentation
 {
@@ -13,16 +14,20 @@ namespace Presentation
     {
         public static void Main(string[] args)
         {
+            Stopwatch stopwatch = new Stopwatch();
             string projectPath = Directory.GetCurrentDirectory();
             Parser.Default.ParseArguments<CommandLineOptions>(args)
                    .WithParsed<CommandLineOptions>(o =>
                    {
                        ImageProcessor.Ih.loadImage(o.loadPath);
-                       //ImageProcessor.BilinearResizing(100, 100);
-                       //ImageProcessor.HorizontalFlip();
-                       //ImageProcessor.VerticalFlip();
-                       //ImageProcessor.DiagonalFlip();
-                       ImageProcessor.Contrast2();
+                       //ImageProcessor.Contrast2();
+                       //ImageProcessor.AlphaMeanFilter();
+                       stopwatch.Start();
+                       //ImageProcessor.ExtendBitmapByOne();
+                       Console.WriteLine("start");
+                       ImageProcessor.AlphaTrimmedFilter();
+                       stopwatch.Stop();
+                       Console.WriteLine("Elapsed time is {0} ms", stopwatch.ElapsedMilliseconds);
                        Console.WriteLine(projectPath + "\\" + o.loadPath);
                        if (ImageProcessor.Ih.Bmp != null)
                        {

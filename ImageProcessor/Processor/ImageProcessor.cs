@@ -331,5 +331,70 @@ namespace Processor
             res.UnlockBits(rd);
             ih.Bmp = res;
         }
+        public static Bitmap ExtendBitmapByOne()
+        {
+            Bitmap res = new Bitmap(ih.Bmp.Width + 2, ih.Bmp.Height + 2);
+
+            for(int i = 1; i <= ih.Bmp.Height; i++)
+            {
+                for(int j = 1; j <= ih.Bmp.Width; j++)
+                {
+                    if (i == 1)
+                        res.SetPixel(j, i - 1, ih.Bmp.GetPixel(j - 1, i - 1));
+                    else if (i == ih.Bmp.Height)
+                        res.SetPixel(j, i + 1, ih.Bmp.GetPixel(j - 1, i - 1));
+                    if (j == 1)
+                        res.SetPixel(j - 1, i, ih.Bmp.GetPixel(j - 1, i - 1));
+                    else if (j == ih.Bmp.Width)
+                        res.SetPixel(j + 1, i, ih.Bmp.GetPixel(j - 1, i - 1));
+
+                    res.SetPixel(i, j, ih.Bmp.GetPixel(i - 1, j - 1));
+                }
+            }
+            res.SetPixel(0, 0, res.GetPixel(1, 0));
+            res.SetPixel(res.Width - 1, 0, res.GetPixel(res.Width - 2, 0));
+            res.SetPixel(0, res.Height - 1, res.GetPixel(0, res.Height - 2));
+            res.SetPixel(res.Width - 1, res.Height - 1, res.GetPixel(res.Height - 2, res.Width - 1));
+            return res;
+        }
+        public static void AlphaTrimmedFilter()
+        {
+            int m = 3;
+            int n = 3;
+            int alpha = 0;
+
+            int height = ih.Bmp.Height;
+            int width = ih.Bmp.Width;
+
+            Bitmap res = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
+            Bitmap buffer = ExtendBitmapByOne();
+
+            ///Run through every pixel of the original image(not buffer)
+            for(int i = 1; i < buffer.Height - 1; i++)
+            {
+                for(int j = 1; j < buffer.Width - 1; j++)
+                {
+                    ///Put a 3x3 mask on every pixel of the image(including buffer, as we need the borders)
+                    int k = 0;
+                    int mean = 0;
+                    Color[] mask = new Color[m * n];
+                    for(int x = i - 1; x < i + 2; x++)
+                    {
+                        for(int y = j - 1; y < j + 2; y++)
+                        {
+                            mask[k++] = buffer.GetPixel(y, x);
+                        }
+                    }
+                    ///Order the mask, so we can trim the border values
+                    Array.Sort(mask, (x, y) => x.B.CompareTo(y.B));
+                    ///Calculate the mean value of the mask
+                    //Console.WriteLine(mask[0].B + " " + mask[1].B + " " + mask[2].B + " " + mask[3].B + " " + mask[4].B + " " + mask[5].B + " " + mask[6].B + " " + mask[7].B + " " + mask[8].B + " " + alpha++);
+                    mean = (mask.Sum(x => x.B) - mask.First().B - mask.Last().B) / (mask.Length - 2);
+                    ///Assign the mean value to the target pixel
+                    res.SetPixel(j - 1, i - 1, Color.FromArgb(mean, mean, mean));
+                }
+            }
+            ih.Bmp = res;
+        }
     }
 }
