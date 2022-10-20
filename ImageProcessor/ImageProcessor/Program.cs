@@ -22,7 +22,7 @@ namespace Presentation
                        //ImageProcessor.Ih.loadImage(o.loadPath);
                        Console.WriteLine("start");
                        var image = o.images.ToList();
-                       Console.WriteLine(ImageProcessor.PeakMeanSquareError(image[0], image[1]));
+                       Console.WriteLine(ImageProcessor.MaximumDifference(image[0], image[1]));
                        //ImageProcessor.AlphaTrimmedFilter();
                        //if (ImageProcessor.Ih.Bmp != null)
                        //{

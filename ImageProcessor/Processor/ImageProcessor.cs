@@ -377,12 +377,10 @@ namespace Processor
                 {
                     ///Put a 3x3 mask on every pixel of the image(including buffer, as we need the borders)
                     int k = 0;
-                    int mean = 0;
                     int meanR = 0;
                     int meanG = 0;
                     int meanB = 0;
 
-                    Color[] mask = new Color[m * n];
                     Color[] maskR = new Color[m * n];
                     Color[] maskG = new Color[m * n];
                     Color[] maskB = new Color[m * n];
@@ -391,7 +389,6 @@ namespace Processor
                     {
                         for(int y = j - 1; y < j + 2; y++)
                         {
-                            mask[k] = buffer.GetPixel(y, x);
                             maskR[k] = buffer.GetPixel(y, x);
                             maskG[k] = buffer.GetPixel(y, x);
                             maskB[k] = buffer.GetPixel(y, x);
@@ -400,7 +397,6 @@ namespace Processor
                     }
 
                     ///Order the mask, so we can trim the border values
-                    Array.Sort(mask, (x, y) => x.B.CompareTo(y.B));
                     Array.Sort(maskR, (x, y) => x.R.CompareTo(y.R));
                     Array.Sort(maskG, (x, y) => x.G.CompareTo(y.G));
                     Array.Sort(maskB, (x, y) => x.B.CompareTo(y.B));
@@ -502,6 +498,40 @@ namespace Processor
             pmse = (sumOfSquaresR + sumOfSquaresG + sumOfSquaresB) / (3 * (M * N) * Math.Pow((maxR + maxG + maxB) / 3, 2));
 
             return pmse;
+        }
+        public static int MaximumDifference(string firstImage, string secondImage)
+        {
+            Bitmap bmp1 = new Bitmap(firstImage);
+            Bitmap bmp2 = new Bitmap(secondImage);
+
+            int M = bmp1.Height;
+            int N = bmp1.Width;
+
+            Double maxDiff = 0;
+
+            for (int i = 0; i < M; i++)
+            {
+                for (int j = 0; j < N; j++)
+                {
+                    Color pixel1 = bmp1.GetPixel(j, i);
+                    Color pixel2 = bmp2.GetPixel(j, i);
+
+                    int redDiff;
+                    int greenDiff;
+                    int blueDiff;
+
+                    redDiff = Math.Abs(pixel1.R - pixel2.R);
+                    greenDiff = Math.Abs(pixel1.G - pixel2.G);
+                    blueDiff= Math.Abs(pixel1.B - pixel2.B);
+
+                    Double sumDiff = (redDiff + greenDiff + blueDiff) / 3;
+
+                    if(sumDiff > maxDiff)
+                        maxDiff = sumDiff;
+                }
+            }
+
+            return (int)maxDiff;
         }
     }
 }
