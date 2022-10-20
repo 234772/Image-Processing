@@ -443,33 +443,65 @@ namespace Processor
 
             Double sumOfSquaresR = 0;
             Double sumOfSquaresG = 0;
-
             Double sumOfSquaresB = 0;
-            int mse = 0;
+            int mse;
 
-            for(int i = 0; i < M; i++)
+            for (int i = 0; i < M; i++)
             {
-                for(int j = 0; j < N; j++)
+                for (int j = 0; j < N; j++)
                 {
-                    Double intensity1 = 0;
-                    Double intensity2 = 0;
-                    int r1, r2, g1, g2, b1, b2;
+                    Color pixel1 = bmp1.GetPixel(j, i);
+                    Color pixel2 = bmp2.GetPixel(j, i);
 
-                    r1 = bmp1.GetPixel(j, i).R;
-                    r2 = bmp2.GetPixel(j, i).R;
-                    g1 = bmp1.GetPixel(j, i).G;
-                    g2 = bmp2.GetPixel(j, i).G;
-                    b1 = bmp1.GetPixel(j, i).B;
-                    b2 = bmp2.GetPixel(j, i).B;
-
-                    sumOfSquaresR += Math.Pow(r1 - r2, 2);
-                    sumOfSquaresG += Math.Pow(g1 - g2, 2);
-                    sumOfSquaresB += Math.Pow(b1 - b2, 2);
+                    sumOfSquaresR += Math.Pow(pixel1.R - pixel2.R, 2);
+                    sumOfSquaresG += Math.Pow(pixel1.G - pixel2.G, 2);
+                    sumOfSquaresB += Math.Pow(pixel1.B - pixel2.B, 2);
                 }
             }
             mse = (int)((sumOfSquaresR + sumOfSquaresG + sumOfSquaresB) / (3 * (M * N)));
 
             return mse;
+        }
+        public static Double PeakMeanSquareError(string firstImage, string secondImage)
+        {
+            Bitmap bmp1 = new Bitmap(firstImage);
+            Bitmap bmp2 = new Bitmap(secondImage);
+
+            Double M = bmp1.Height;
+            Double N = bmp1.Width;
+
+            Double sumOfSquaresR = 0;
+            Double sumOfSquaresG = 0;
+            Double sumOfSquaresB = 0;
+
+            Double maxR = 0;
+            Double maxG = 0;
+            Double maxB = 0;
+
+            Double pmse;
+
+            for (int i = 0; i < M; i++)
+            {
+                for (int j = 0; j < N; j++)
+                {
+                    Color pixel1 = bmp1.GetPixel(j, i);
+                    Color pixel2 = bmp2.GetPixel(j, i);
+
+                    if(pixel1.R > maxR)
+                        maxR = pixel1.R;
+                    if(pixel1.G > maxG)
+                        maxG = pixel1.G;
+                    if(pixel1.B > maxB)
+                        maxB = pixel1.B;
+
+                    sumOfSquaresR += Math.Pow(pixel1.R - pixel2.R, 2);
+                    sumOfSquaresG += Math.Pow(pixel1.G - pixel2.G, 2);
+                    sumOfSquaresB += Math.Pow(pixel1.B - pixel2.B, 2);
+                }
+            }
+            pmse = (sumOfSquaresR + sumOfSquaresG + sumOfSquaresB) / (3 * (M * N) * Math.Pow((maxR + maxG + maxB) / 3, 2));
+
+            return pmse;
         }
     }
 }
