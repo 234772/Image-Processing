@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -361,7 +362,7 @@ namespace Processor
         {
             int m = 3;
             int n = 3;
-            int alpha = 0;
+            int alpha = 3;
 
             int height = ih.Bmp.Height;
             int width = ih.Bmp.Width;
@@ -380,10 +381,12 @@ namespace Processor
                     int meanR = 0;
                     int meanG = 0;
                     int meanB = 0;
+
                     Color[] mask = new Color[m * n];
                     Color[] maskR = new Color[m * n];
                     Color[] maskG = new Color[m * n];
                     Color[] maskB = new Color[m * n];
+
                     for (int x = i - 1; x < i + 2; x++)
                     {
                         for(int y = j - 1; y < j + 2; y++)
@@ -395,16 +398,35 @@ namespace Processor
                             k++;
                         }
                     }
+
                     ///Order the mask, so we can trim the border values
                     Array.Sort(mask, (x, y) => x.B.CompareTo(y.B));
                     Array.Sort(maskR, (x, y) => x.R.CompareTo(y.R));
                     Array.Sort(maskG, (x, y) => x.G.CompareTo(y.G));
                     Array.Sort(maskB, (x, y) => x.B.CompareTo(y.B));
+
+                    List<Color> colorsR = new List<Color>(maskR);
+                    List<Color> colorsG = new List<Color>(maskG);
+                    List<Color> colorsB = new List<Color>(maskB);
+
+                    ///Remove alpha elements from both sides of the sorted arrayList
+                    for(int l = 0; l < alpha; l++)
+                    {
+                        colorsR.RemoveAt(l);
+                        colorsR.RemoveAt(colorsR.Count - l - 1);
+
+                        colorsG.RemoveAt(l);
+                        colorsG.RemoveAt(colorsG.Count - l - 1);
+
+                        colorsB.RemoveAt(l);
+                        colorsB.RemoveAt(colorsB.Count - l - 1);
+                    }
+
                     ///Calculate the mean value of the mask
-                    mean = (mask.Sum(x => x.B) - mask.First().B - mask.Last().B) / (mask.Length - 2);
-                    meanR = (maskR.Sum(x => x.R) - maskR.First().R - maskR.Last().R) / (maskR.Length - 2);
-                    meanG = (maskG.Sum(x => x.G) - maskG.First().G - maskG.Last().G) / (maskG.Length - 2);
-                    meanB = (maskB.Sum(x => x.B) - maskB.First().B - maskB.Last().B) / (maskB.Length - 2);
+                    meanR = colorsR.Sum(x => x.R) / colorsR.Count;
+                    meanG = colorsG.Sum(x => x.G) / colorsG.Count;
+                    meanB = colorsB.Sum(x => x.B) / colorsB.Count;
+
                     ///Assign the mean value to the target pixel
                     res.SetPixel(j - 1, i - 1, Color.FromArgb(meanR, meanG, meanB));
                 }
