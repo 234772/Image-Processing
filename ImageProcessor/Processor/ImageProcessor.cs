@@ -397,11 +397,10 @@ namespace Processor
                     }
                     ///Order the mask, so we can trim the border values
                     Array.Sort(mask, (x, y) => x.B.CompareTo(y.B));
-                    Array.Sort(maskR, (x, y) => x.B.CompareTo(y.R));
-                    Array.Sort(maskG, (x, y) => x.B.CompareTo(y.G));
+                    Array.Sort(maskR, (x, y) => x.R.CompareTo(y.R));
+                    Array.Sort(maskG, (x, y) => x.G.CompareTo(y.G));
                     Array.Sort(maskB, (x, y) => x.B.CompareTo(y.B));
                     ///Calculate the mean value of the mask
-                    //Console.WriteLine(mask[0].B + " " + mask[1].B + " " + mask[2].B + " " + mask[3].B + " " + mask[4].B + " " + mask[5].B + " " + mask[6].B + " " + mask[7].B + " " + mask[8].B + " " + alpha++);
                     mean = (mask.Sum(x => x.B) - mask.First().B - mask.Last().B) / (mask.Length - 2);
                     meanR = (maskR.Sum(x => x.R) - maskR.First().R - maskR.Last().R) / (maskR.Length - 2);
                     meanG = (maskG.Sum(x => x.G) - maskG.First().G - maskG.Last().G) / (maskG.Length - 2);
