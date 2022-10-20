@@ -362,7 +362,7 @@ namespace Processor
         {
             int m = 3;
             int n = 3;
-            int alpha = 3;
+            int alpha = 1;
 
             int height = ih.Bmp.Height;
             int width = ih.Bmp.Width;
@@ -440,18 +440,36 @@ namespace Processor
 
             int M = bmp1.Height;
             int N = bmp1.Width;
-            Double sumOfSquares = 0;
+
+            Double sumOfSquaresR = 0;
+            Double sumOfSquaresG = 0;
+
+            Double sumOfSquaresB = 0;
             int mse = 0;
 
             for(int i = 0; i < M; i++)
             {
                 for(int j = 0; j < N; j++)
                 {
-                    sumOfSquares += Math.Pow(bmp1.GetPixel(j, i).B - bmp2.GetPixel(j, i).B, 2);
+                    Double intensity1 = 0;
+                    Double intensity2 = 0;
+                    int r1, r2, g1, g2, b1, b2;
+
+                    r1 = bmp1.GetPixel(j, i).R;
+                    r2 = bmp2.GetPixel(j, i).R;
+                    g1 = bmp1.GetPixel(j, i).G;
+                    g2 = bmp2.GetPixel(j, i).G;
+                    b1 = bmp1.GetPixel(j, i).B;
+                    b2 = bmp2.GetPixel(j, i).B;
+
+                    sumOfSquaresR += Math.Pow(r1 - r2, 2);
+                    sumOfSquaresG += Math.Pow(g1 - g2, 2);
+                    sumOfSquaresB += Math.Pow(b1 - b2, 2);
                 }
             }
+            mse = (int)((sumOfSquaresR + sumOfSquaresG + sumOfSquaresB) / (3 * (M * N)));
 
-            return (int)(sumOfSquares / (M * N));
+            return mse;
         }
     }
 }
