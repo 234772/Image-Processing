@@ -377,21 +377,37 @@ namespace Processor
                     ///Put a 3x3 mask on every pixel of the image(including buffer, as we need the borders)
                     int k = 0;
                     int mean = 0;
+                    int meanR = 0;
+                    int meanG = 0;
+                    int meanB = 0;
                     Color[] mask = new Color[m * n];
-                    for(int x = i - 1; x < i + 2; x++)
+                    Color[] maskR = new Color[m * n];
+                    Color[] maskG = new Color[m * n];
+                    Color[] maskB = new Color[m * n];
+                    for (int x = i - 1; x < i + 2; x++)
                     {
                         for(int y = j - 1; y < j + 2; y++)
                         {
-                            mask[k++] = buffer.GetPixel(y, x);
+                            mask[k] = buffer.GetPixel(y, x);
+                            maskR[k] = buffer.GetPixel(y, x);
+                            maskG[k] = buffer.GetPixel(y, x);
+                            maskB[k] = buffer.GetPixel(y, x);
+                            k++;
                         }
                     }
                     ///Order the mask, so we can trim the border values
                     Array.Sort(mask, (x, y) => x.B.CompareTo(y.B));
+                    Array.Sort(maskR, (x, y) => x.B.CompareTo(y.R));
+                    Array.Sort(maskG, (x, y) => x.B.CompareTo(y.G));
+                    Array.Sort(maskB, (x, y) => x.B.CompareTo(y.B));
                     ///Calculate the mean value of the mask
                     //Console.WriteLine(mask[0].B + " " + mask[1].B + " " + mask[2].B + " " + mask[3].B + " " + mask[4].B + " " + mask[5].B + " " + mask[6].B + " " + mask[7].B + " " + mask[8].B + " " + alpha++);
                     mean = (mask.Sum(x => x.B) - mask.First().B - mask.Last().B) / (mask.Length - 2);
+                    meanR = (maskR.Sum(x => x.R) - maskR.First().R - maskR.Last().R) / (maskR.Length - 2);
+                    meanG = (maskG.Sum(x => x.G) - maskG.First().G - maskG.Last().G) / (maskG.Length - 2);
+                    meanB = (maskB.Sum(x => x.B) - maskB.First().B - maskB.Last().B) / (maskB.Length - 2);
                     ///Assign the mean value to the target pixel
-                    res.SetPixel(j - 1, i - 1, Color.FromArgb(mean, mean, mean));
+                    res.SetPixel(j - 1, i - 1, Color.FromArgb(meanR, meanG, meanB));
                 }
             }
             ih.Bmp = res;
