@@ -10,6 +10,6 @@ namespace Processor
     internal interface IImageHandler
     {
         Bitmap loadImage(string path);
-        void saveImage(string path);
+        void saveImage(Bitmap image, string path);
     }
 }

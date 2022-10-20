@@ -25,11 +25,11 @@ namespace Processor
             return bmp;
         }
 
-        public void saveImage(string path)
+        public void saveImage(Bitmap image, string path)
         {
             try
             {
-            bmp.Save(path);
+                image.Save(path);
             }
             catch(ArgumentException)
             {

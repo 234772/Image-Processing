@@ -21,8 +21,9 @@ namespace Presentation
                    {
                        //ImageProcessor.Ih.loadImage(o.loadPath);
                        Console.WriteLine("start");
-                       var image = o.images.ToList();
-                       Console.WriteLine(ImageProcessor.MaximumDifference(image[0], image[1]));
+                       ImageProcessor.Process(o);
+                       //var image = o.images.ToList();
+                       //Console.WriteLine(ImageProcessor.MaximumDifference(image[0], image[1]));
                        //ImageProcessor.AlphaTrimmedFilter();
                        //if (ImageProcessor.Ih.Bmp != null)
                        //{

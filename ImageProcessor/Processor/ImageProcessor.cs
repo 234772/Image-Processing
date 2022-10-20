@@ -16,6 +16,46 @@ namespace Processor
         private static ImageHandler ih = new ImageHandler();
         public static ImageHandler Ih { get { return ih; } }
 
+        public static void Process(CommandLineOptions o)
+        {
+            Bitmap bmp;
+            if (o == null)
+                // TODO: Add null handling
+                return;
+            if (o.firstPath == null || o.secondPath == null)
+                // TODO: Add null handling
+                return;
+            else
+                bmp = ih.loadImage(o.firstPath);
+            if (o.brightness != 0)
+                ChangeBrightness(bmp, o.secondPath, o.brightness);
+            if (o.contrast)
+                Contrast2(bmp, o.secondPath);
+            if (o.negative)
+                NegativeImage(bmp, o.secondPath);
+            if (o.Dimensions.Count() > 0)
+            {
+                List<int> dimensions = new List<int>(o.Dimensions);
+                BilinearResizing(bmp, o.secondPath, dimensions[0], dimensions[1]);
+            }
+            if (o.hflip)
+                HorizontalFlip(bmp, o.secondPath);
+            if (o.vflip)
+                VerticalFlip(bmp, o.secondPath);
+            if (o.dflip)
+                DiagonalFlip(bmp, o.secondPath);
+            if(o.alpha > 0)
+                // TODO: Decide if we want to have fixed alpha, hardcoded in the method (then we make o.alpha into bool)
+                AlphaTrimmedFilter(bmp, o.secondPath, o.alpha);
+            if (o.meanSquare)
+            {
+                Console.WriteLine(MeanSquareError(o.firstPath, o.secondPath));
+            }
+            if (o.peakMeanSquare)
+                Console.WriteLine(PeakMeanSquareError(o.firstPath, o.secondPath));
+            if (o.maximumDifference)
+                Console.WriteLine(MaximumDifference(o.firstPath, o.secondPath));
+        }
         private static int Truncate(int pixelValue)
         {
             if(pixelValue > 255)
@@ -25,46 +65,45 @@ namespace Processor
             else
                 return pixelValue;
         }
-        public static void ChangeBrightness(int changeValue)
+        public static void ChangeBrightness(Bitmap image, string savePath, int changeValue)
         {
-            Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
+            Bitmap bmp = new Bitmap(image);
 
             for (int y = 0; y < bmp.Height; y++)
             {
                 for (int x = 0; x < bmp.Width; x++)
                 {
-                    Color color = ih.Bmp.GetPixel(y, x);
+                    Color color = image.GetPixel(y, x);
                     Color newColor = Color.FromArgb(Truncate(color.R + changeValue), Truncate(color.G + changeValue), Truncate(color.B + changeValue));
                     //Console.WriteLine(color.ToString());
                     bmp.SetPixel(y, x, newColor);
                 }
             }
 
-            ih.Bmp = bmp;
+            ih.saveImage(bmp, savePath);
         }
-        public static void NegativeImage()
+        public static void NegativeImage(Bitmap image, string savePath)
         {
-            Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
+            Bitmap bmp = new Bitmap(image.Width, image.Height);
 
             for(int y = 0; y < bmp.Height; y++)
             {
                 for(int x = 0; x < bmp.Width; x++)
                 {
-                    Color color = ih.Bmp.GetPixel(y, x);
+                    Color color = image.GetPixel(y, x);
                     Color newColor = Color.FromArgb(255 - color.R, 255 - color.G, 255 - color.B);
-                    //Console.WriteLine(color.ToString());
                     bmp.SetPixel(y, x, newColor);
                 }
             }
 
-            ih.Bmp = bmp;
+            ih.saveImage(bmp, savePath);
         }
-        public static void BilinearResizing(int nWidth, int nHeight)
+        public static void BilinearResizing(Bitmap image, string savePath, int nWidth, int nHeight)
         {
             var b = new Bitmap(nWidth, nHeight);
 
-            double nXFactor = (double)Ih.Bmp.Width / (double)nWidth;
-            double nYFactor = (double)Ih.Bmp.Height / (double)nHeight;
+            double nXFactor = (double)image.Width / (double)nWidth;
+            double nYFactor = (double)image.Height / (double)nHeight;
 
             double fraction_x, fraction_y, one_minus_x, one_minus_y;
             int ceil_x, ceil_y, floor_x, floor_y;
@@ -88,12 +127,12 @@ namespace Processor
 
                     ceil_x = floor_x + 1;
 
-                    if (ceil_x >= Ih.Bmp.Width)
+                    if (ceil_x >= image.Width)
                         ceil_x = floor_x;
 
                     ceil_y = floor_y + 1;
 
-                    if (ceil_y >= Ih.Bmp.Height)
+                    if (ceil_y >= image.Height)
                         ceil_y = floor_y;
 
                     fraction_x = x * nXFactor - floor_x;
@@ -102,10 +141,10 @@ namespace Processor
                     one_minus_x = 1.0 - fraction_x;
                     one_minus_y = 1.0 - fraction_y;
 
-                    c1 = Ih.Bmp.GetPixel(floor_x, floor_y);
-                    c2 = Ih.Bmp.GetPixel(ceil_x, floor_y);
-                    c3 = Ih.Bmp.GetPixel(floor_x, ceil_y);
-                    c4 = Ih.Bmp.GetPixel(ceil_x, ceil_y);
+                    c1 = image.GetPixel(floor_x, floor_y);
+                    c2 = image.GetPixel(ceil_x, floor_y);
+                    c3 = image.GetPixel(floor_x, ceil_y);
+                    c4 = image.GetPixel(ceil_x, ceil_y);
 
                     // Blue
                     b1 = (byte)(one_minus_x * c1.B + fraction_x * c2.B);
@@ -127,89 +166,62 @@ namespace Processor
 
                     b.SetPixel(x, y, Color.FromArgb(255, red, green, blue));
                 }
-            ih.Bmp = b;
+
+            ih.saveImage(b, savePath);
         }
-        public static void HorizontalFlip()
+        public static void HorizontalFlip(Bitmap image, string savePath)
         {
-            Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
+            // TODO: Check if it works - doesn't for me
+            Bitmap bmp = new Bitmap(image.Width, image.Height);
             int horizontalPixel = 0;
 
-            for (int y = 0; y < bmp.Height - 1; y++)
+            for (int y = 0; y < image.Height - 1; y++)
             {
-                for(int x = bmp.Width - 1; x >= 0 ; x--)
+                for(int x = image.Width - 1; x >= 0 ; x--)
                 {
-                    bmp.SetPixel(horizontalPixel++,y,ih.Bmp.GetPixel(x, y));
+                    bmp.SetPixel(horizontalPixel++, y, image.GetPixel(x, y));
                 }
                 horizontalPixel = 0;
             }
-            ih.Bmp = bmp;
+            ih.saveImage(bmp, savePath);
         }
-        public static void VerticalFlip()
+        public static void VerticalFlip(Bitmap image, string savePath)
         {
-            Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
+            Bitmap bmp = new Bitmap(image.Width, image.Height);
             int verticalPixel = 0;
 
-            for (int x = 0; x < ih.Bmp.Width - 1; x++)
+            for (int x = 0; x < image.Width - 1; x++)
             {
-                for (int y = ih.Bmp.Height - 1; y >=0; y--)
+                for (int y = image.Height - 1; y >=0; y--)
                 {
-                    bmp.SetPixel(x, verticalPixel++, ih.Bmp.GetPixel(x, y));
+                    bmp.SetPixel(x, verticalPixel++, image.GetPixel(x, y));
                 }
                 verticalPixel = 0;
             }
-            ih.Bmp = bmp;
+            ih.saveImage(bmp, savePath);
         }
-        public static void DiagonalFlip()
+        public static void DiagonalFlip(Bitmap image, string savePath)
         {
-            Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
+            Bitmap bmp = new Bitmap(image.Width, image.Height);
             int pixel1 = 0;
             int pixel2 = 0;
 
-            for (int y = ih.Bmp.Height - 1; y > 0; y--)
+            for (int y = image.Height - 1; y > 0; y--)
             {
-                for (int x = ih.Bmp.Width - 1; x > 0; x--)
+                for (int x = image.Width - 1; x > 0; x--)
                 {
-                    bmp.SetPixel(pixel1, pixel2, ih.Bmp.GetPixel(x, y));
+                    bmp.SetPixel(pixel1, pixel2, image.GetPixel(x, y));
                     pixel1++;
                 }
                 pixel1 = 0;
                 pixel2++;
             }
-            ih.Bmp = bmp;
+            ih.saveImage(bmp, savePath);
         }
-        public static void Contrast()
+        public static void Contrast2(Bitmap image, string savePath)
         {
-            Bitmap bmp = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
-
-            byte lowPixel = 255;
-            byte highPixel = 0;
-
-            for(int i = 0; i < ih.Bmp.Height; i++)
-            {
-                for(int j = 0; j < ih.Bmp.Width; j++)
-                {
-                    if(lowPixel > ih.Bmp.GetPixel(i, j).B)
-                        lowPixel = ih.Bmp.GetPixel(i, j).B;
-                    if(highPixel < ih.Bmp.GetPixel(i, j).B)
-                        highPixel = ih.Bmp.GetPixel(i, j).B;
-                }
-            }
-
-            for (int i = 0; i < ih.Bmp.Height; i++)
-            {
-                for (int j = 0; j < ih.Bmp.Width; j++)
-                {
-                    var contrastPixel = (ih.Bmp.GetPixel(j, i).B - lowPixel) * ((255 - 0) / (highPixel - lowPixel)) + 0;
-                    Color color = Color.FromArgb(contrastPixel, contrastPixel, contrastPixel);
-                    bmp.SetPixel(j, i, color);
-                }
-            }
-            ih.Bmp = bmp;
-        }
-        public static void Contrast2()
-        {
-            int width = ih.Bmp.Width;
-            int height = ih.Bmp.Height;
+            int width = image.Width;
+            int height = image.Height;
 
             Bitmap bmp = new Bitmap(width, height);
 
@@ -227,14 +239,11 @@ namespace Processor
             {
                 for(int j = 0; j < width; j++)
                 {
-                    r[i, j] = (byte)ih.Bmp.GetPixel(i, j).R;
-                    g[i, j] = (byte)ih.Bmp.GetPixel(i, j).G;
-                    b[i, j] = (byte)ih.Bmp.GetPixel(i, j).B;
+                    r[i, j] = (byte)image.GetPixel(i, j).R;
+                    g[i, j] = (byte)image.GetPixel(i, j).G;
+                    b[i, j] = (byte)image.GetPixel(i, j).B;
 
                     intensity[i, j] = (byte)((r[i, j] + g[i, j] + b[i, j]) / 3);
-
-                    //Console.Write(r[j, i] + " " + g[j, i] + " " + b[j, i] + " " + intensity[j, i]);
-                    //Console.WriteLine();
                 }
             }
 
@@ -285,9 +294,9 @@ namespace Processor
                     bmp.SetPixel(i, j, Color.FromArgb((byte)(Math.Floor(255 * sumR)), (byte)(Math.Floor(255 * sumG)), (byte)(Math.Floor(255 * sumB))));
                 }
             }
-            ih.Bmp = bmp;
+            ih.saveImage(bmp, savePath);
         }
-        public static void Contrast3()
+        public static void Contrast3(Bitmap image)
         {
             int w = ih.Bmp.Width;
             int h = ih.Bmp.Height;
@@ -332,7 +341,7 @@ namespace Processor
             res.UnlockBits(rd);
             ih.Bmp = res;
         }
-        public static Bitmap ExtendBitmapByOne()
+        public static Bitmap ExtendBitmapByOne(Bitmap image)
         {
             Bitmap res = new Bitmap(ih.Bmp.Width + 2, ih.Bmp.Height + 2);
 
@@ -358,17 +367,16 @@ namespace Processor
             res.SetPixel(res.Width - 1, res.Height - 1, res.GetPixel(res.Height - 2, res.Width - 1));
             return res;
         }
-        public static void AlphaTrimmedFilter()
+        public static void AlphaTrimmedFilter(Bitmap image, string savePath, int alpha)
         {
             int m = 3;
             int n = 3;
-            int alpha = 1;
 
             int height = ih.Bmp.Height;
             int width = ih.Bmp.Width;
 
-            Bitmap res = new Bitmap(ih.Bmp.Width, ih.Bmp.Height);
-            Bitmap buffer = ExtendBitmapByOne();
+            Bitmap res = new Bitmap(image.Width, image.Height);
+            Bitmap buffer = ExtendBitmapByOne(image);
 
             ///Run through every pixel of the original image(not buffer)
             for(int i = 1; i < buffer.Height - 1; i++)
@@ -427,7 +435,7 @@ namespace Processor
                     res.SetPixel(j - 1, i - 1, Color.FromArgb(meanR, meanG, meanB));
                 }
             }
-            ih.Bmp = res;
+            ih.saveImage(res, savePath);
         }
         public static int MeanSquareError(string firstImage, string secondImage)
         {
