@@ -433,5 +433,25 @@ namespace Processor
             }
             ih.Bmp = res;
         }
+        public static int MeanSquareError(string firstImage, string secondImage)
+        {
+            Bitmap bmp1 = new Bitmap(firstImage);
+            Bitmap bmp2 = new Bitmap(secondImage);
+
+            int M = bmp1.Height;
+            int N = bmp1.Width;
+            Double sumOfSquares = 0;
+            int mse = 0;
+
+            for(int i = 0; i < M; i++)
+            {
+                for(int j = 0; j < N; j++)
+                {
+                    sumOfSquares += Math.Pow(bmp1.GetPixel(j, i).B - bmp2.GetPixel(j, i).B, 2);
+                }
+            }
+
+            return (int)(sumOfSquares / (M * N));
+        }
     }
 }

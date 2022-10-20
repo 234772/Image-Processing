@@ -19,20 +19,15 @@ namespace Presentation
             Parser.Default.ParseArguments<CommandLineOptions>(args)
                    .WithParsed<CommandLineOptions>(o =>
                    {
-                       ImageProcessor.Ih.loadImage(o.loadPath);
-                       //ImageProcessor.Contrast2();
-                       //ImageProcessor.AlphaMeanFilter();
-                       stopwatch.Start();
-                       //ImageProcessor.ExtendBitmapByOne();
+                       //ImageProcessor.Ih.loadImage(o.loadPath);
                        Console.WriteLine("start");
-                       ImageProcessor.AlphaTrimmedFilter();
-                       stopwatch.Stop();
-                       Console.WriteLine("Elapsed time is {0} ms", stopwatch.ElapsedMilliseconds);
-                       Console.WriteLine(projectPath + "\\" + o.loadPath);
-                       if (ImageProcessor.Ih.Bmp != null)
-                       {
-                            ImageProcessor.Ih.saveImage(projectPath + "\\" + o.savePath);
-                       }
+                       var image = o.images.ToList();
+                       Console.WriteLine(ImageProcessor.MeanSquareError(image[0], image[1]));
+                       //ImageProcessor.AlphaTrimmedFilter();
+                       //if (ImageProcessor.Ih.Bmp != null)
+                       //{
+                       //    ImageProcessor.Ih.saveImage(projectPath + "\\" + o.savePath);
+                       //}
                    });
             Console.ReadLine();
         }
