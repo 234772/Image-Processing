@@ -55,6 +55,8 @@ namespace Processor
                 Console.WriteLine(PeakMeanSquareError(o.firstPath, o.secondPath));
             if (o.maximumDifference)
                 Console.WriteLine(MaximumDifference(o.firstPath, o.secondPath));
+            if (o.signalToNoiseRatio)
+                Console.WriteLine(SignalToNoiseRatio(o.firstPath, o.secondPath));
         }
         private static int Truncate(int pixelValue)
         {
@@ -540,6 +542,44 @@ namespace Processor
             }
 
             return (int)maxDiff;
+        }
+        public static Double SignalToNoiseRatio(string firstImage, string secondImage)
+        {
+            Bitmap bmp1 = new Bitmap(firstImage);
+            Bitmap bmp2 = new Bitmap(secondImage);
+
+            int M = bmp1.Height;
+            int N = bmp1.Width;
+
+            Double sumOfSquaresR = 0;
+            Double sumOfSquaresG = 0;
+            Double sumOfSquaresB = 0;
+
+            Double sumOfSquarePixelR = 0;
+            double sumOfSquarePixelG = 0;
+            double sumOfSquarePixelB = 0;
+
+            double snr;
+
+            for (int i = 0; i < M; i++)
+            {
+                for (int j = 0; j < N; j++)
+                {
+                    Color pixel1 = bmp1.GetPixel(j, i);
+                    Color pixel2 = bmp2.GetPixel(j, i);
+
+                    sumOfSquaresR += Math.Pow(pixel1.R - pixel2.R, 2);
+                    sumOfSquaresG += Math.Pow(pixel1.G - pixel2.G, 2);
+                    sumOfSquaresB += Math.Pow(pixel1.B - pixel2.B, 2);
+
+                    sumOfSquarePixelR += Math.Pow(pixel1.R, 2);
+                    sumOfSquarePixelG += Math.Pow(pixel1.G, 2);
+                    sumOfSquarePixelB += Math.Pow(pixel1.B, 2);
+                }
+            }
+            snr = 10 * Math.Log10((sumOfSquarePixelR + sumOfSquarePixelG + sumOfSquarePixelB) / (sumOfSquaresR + sumOfSquaresG + sumOfSquaresB));
+
+            return snr;
         }
     }
 }

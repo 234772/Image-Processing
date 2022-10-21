@@ -30,12 +30,13 @@ namespace Processor
         public bool vflip { get; set; }
         [Option(shortName: 'd', longName: "dflip", Required = false, HelpText = "Flips the image diagonally", Default = false)]
         public bool dflip { get; set; }
-        [Option(shortName: 'm', longName: "mse", Required = false, HelpText = "Calculates the mean square error between two images")]
+        [Option(shortName: 'm', longName: "mse", Required = false, HelpText = "Calculates the mean square error between two images", Default = false)]
         public bool meanSquare { get; set; }
-        [Option(shortName: 'p', longName: "pmse", Required = false, HelpText = "Calculates the mean square error between two images")]
+        [Option(shortName: 'p', longName: "pmse", Required = false, HelpText = "Calculates the peak mean square error between two images", Default = false)]
         public bool peakMeanSquare { get; set; }
-        [Option(shortName: 'z', longName: "md", Required = false, HelpText = "Calculates the mean square error between two images")]
+        [Option(shortName: 'z', longName: "md", Required = false, HelpText = "Calculates the maximum difference between two images", Default = false)]
         public bool maximumDifference { get; set; }
-
+        [Option(shortName:'s', longName: "snr", Required = false, HelpText = "Calculates the signal to noise ratio between two images", Default = false)]
+        public bool signalToNoiseRatio { get; set; }
     }
 }
