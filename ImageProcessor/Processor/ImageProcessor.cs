@@ -57,6 +57,8 @@ namespace Processor
                 Console.WriteLine(MaximumDifference(o.firstPath, o.secondPath));
             if (o.signalToNoiseRatio)
                 Console.WriteLine(SignalToNoiseRatio(o.firstPath, o.secondPath));
+            if (o.peakSignalToNoiseRatio)
+                Console.WriteLine(PeakSignalToNoiseRatio(o.firstPath, o.secondPath));
         }
         private static int Truncate(int pixelValue)
         {
@@ -580,6 +582,51 @@ namespace Processor
             snr = 10 * Math.Log10((sumOfSquarePixelR + sumOfSquarePixelG + sumOfSquarePixelB) / (sumOfSquaresR + sumOfSquaresG + sumOfSquaresB));
 
             return snr;
+        }
+        public static Double PeakSignalToNoiseRatio(string firstImage, string secondImage)
+        {
+            Bitmap bmp1 = new Bitmap(firstImage);
+            Bitmap bmp2 = new Bitmap(secondImage);
+
+            int M = bmp1.Height;
+            int N = bmp1.Width;
+
+            Double sumOfSquaresR = 0;
+            Double sumOfSquaresG = 0;
+            Double sumOfSquaresB = 0;
+
+            Double maxR = 0;
+            Double maxG = 0;
+            Double maxB = 0;
+
+            double psnr;
+
+            for (int i = 0; i < M; i++)
+            {
+                for (int j = 0; j < N; j++)
+                {
+                    Color pixel1 = bmp1.GetPixel(j, i);
+                    Color pixel2 = bmp2.GetPixel(j, i);
+
+                    sumOfSquaresR += Math.Pow(pixel1.R - pixel2.R, 2);
+                    sumOfSquaresG += Math.Pow(pixel1.G - pixel2.G, 2);
+                    sumOfSquaresB += Math.Pow(pixel1.B - pixel2.B, 2);
+
+                    if (pixel1.R > maxR)
+                        maxR = pixel1.R;
+                    if (pixel1.G > maxG)
+                        maxG = pixel1.G;
+                    if (pixel1.B > maxB)
+                        maxB = pixel1.B;
+                }
+            }
+            maxR = Math.Pow(maxR, 2);
+            maxG = Math.Pow(maxG, 2);
+            maxB = Math.Pow(maxB, 2);
+
+            psnr = 10 * Math.Log10((maxR + maxG + maxB) / (sumOfSquaresR + sumOfSquaresG + sumOfSquaresB));
+
+            return 20 * Math.Log10(255 + 255 + 255) - 10 * Math.Log10(MeanSquareError(firstImage, secondImage));
         }
     }
 }

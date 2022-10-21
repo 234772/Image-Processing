@@ -38,5 +38,7 @@ namespace Processor
         public bool maximumDifference { get; set; }
         [Option(shortName:'s', longName: "snr", Required = false, HelpText = "Calculates the signal to noise ratio between two images", Default = false)]
         public bool signalToNoiseRatio { get; set; }
+        [Option(longName: "psnr", Required = false, HelpText = "Calculates the peak signal to noise ratio between two images", Default = false)]
+        public bool peakSignalToNoiseRatio { get; set; }
     }
 }
