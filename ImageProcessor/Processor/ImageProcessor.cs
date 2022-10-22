@@ -47,6 +47,8 @@ namespace Processor
             if(o.alpha > 0)
                 // TODO: Decide if we want to have fixed alpha, hardcoded in the method (then we make o.alpha into bool)
                 AlphaTrimmedFilter(bmp, o.secondPath, o.alpha);
+            if (o.geometricMeanFilter)
+                GeometricMeanFilter(bmp, o.secondPath);
             if (o.meanSquare)
             {
                 Console.WriteLine(MeanSquareError(o.firstPath, o.secondPath));
@@ -437,6 +439,56 @@ namespace Processor
 
                     ///Assign the mean value to the target pixel
                     res.SetPixel(j - 1, i - 1, Color.FromArgb(meanR, meanG, meanB));
+                }
+            }
+            ih.saveImage(res, savePath);
+        }
+        public static void GeometricMeanFilter(Bitmap image, string savePath)
+        {
+            int m = 3;
+            int n = 3;
+
+            int height = ih.Bmp.Height;
+            int width = ih.Bmp.Width;
+
+            Bitmap res = new Bitmap(image.Width, image.Height);
+            Bitmap buffer = ExtendBitmapByOne(image);
+
+            ///Run through every pixel of the original image(not buffer)
+            for (int i = 1; i < buffer.Height - 1; i++)
+            {
+                for (int j = 1; j < buffer.Width - 1; j++)
+                {
+                    ///Put a 3x3 mask on every pixel of the image(including buffer, as we need the borders)
+                    int k = 0;
+
+                    Color[] maskR = new Color[m * n];
+                    Color[] maskG = new Color[m * n];
+                    Color[] maskB = new Color[m * n];
+
+                    for (int x = i - 1; x < i + 2; x++)
+                    {
+                        for (int y = j - 1; y < j + 2; y++)
+                        {
+                            maskR[k] = buffer.GetPixel(y, x);
+                            maskG[k] = buffer.GetPixel(y, x);
+                            maskB[k] = buffer.GetPixel(y, x);
+                            k++;
+                        }
+                    }
+
+                    double productR = maskR[0].R;
+                    double productG = maskG[0].G;
+                    double productB = maskB[0].B;
+
+                    for(int x = 1; x < maskR.Length; x++)
+                    {
+                        productR *= maskR[x].R;
+                        productG *= maskG[x].G;
+                        productB *= maskB[x].B;
+                    }
+                    ///Assign the geometric product value to the target pixel
+                    res.SetPixel(j - 1, i - 1, Color.FromArgb((int)Math.Pow(productR, 0.11), (int)Math.Pow(productG, 0.11), (int)Math.Pow(productB, 0.11)));
                 }
             }
             ih.saveImage(res, savePath);
