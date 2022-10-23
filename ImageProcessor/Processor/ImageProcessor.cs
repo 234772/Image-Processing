@@ -6,6 +6,7 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using static System.Net.Mime.MediaTypeNames;
 
@@ -50,9 +51,7 @@ namespace Processor
             if (o.geometricMeanFilter)
                 GeometricMeanFilter(bmp, o.secondPath);
             if (o.meanSquare)
-            {
                 Console.WriteLine(MeanSquareError(o.firstPath, o.secondPath));
-            }
             if (o.peakMeanSquare)
                 Console.WriteLine(PeakMeanSquareError(o.firstPath, o.secondPath));
             if (o.maximumDifference)
@@ -61,6 +60,8 @@ namespace Processor
                 Console.WriteLine(SignalToNoiseRatio(o.firstPath, o.secondPath));
             if (o.peakSignalToNoiseRatio)
                 Console.WriteLine(PeakSignalToNoiseRatio(o.firstPath, o.secondPath));
+
+
         }
         private static int Truncate(int pixelValue)
         {
@@ -385,6 +386,8 @@ namespace Processor
             Bitmap buffer = ExtendBitmapByOne(image);
 
             ///Run through every pixel of the original image(not buffer)
+            ///
+            
             for(int i = 1; i < buffer.Height - 1; i++)
             {
                 for(int j = 1; j < buffer.Width - 1; j++)
@@ -398,14 +401,23 @@ namespace Processor
                     Color[] maskR = new Color[m * n];
                     Color[] maskG = new Color[m * n];
                     Color[] maskB = new Color[m * n];
+                 
+                  
 
                     for (int x = i - 1; x < i + 2; x++)
                     {
                         for(int y = j - 1; y < j + 2; y++)
                         {
-                            maskR[k] = buffer.GetPixel(y, x);
-                            maskG[k] = buffer.GetPixel(y, x);
-                            maskB[k] = buffer.GetPixel(y, x);
+                            Color value;
+                            value = buffer.GetPixel(y, x);
+                            maskR[k] = value;
+                            maskG[k] = value;
+                            maskB[k] = value;
+
+
+                            //maskR[k] = buffer.GetPixel(y, x);
+                            //maskG[k] = buffer.GetPixel(y, x);
+                            //maskB[k] = buffer.GetPixel(y, x);
                             k++;
                         }
                     }
@@ -420,7 +432,7 @@ namespace Processor
                     List<Color> colorsB = new List<Color>(maskB);
 
                     ///Remove alpha elements from both sides of the sorted arrayList
-                    for(int l = 0; l < alpha; l++)
+                    for (int l = 0; l < alpha; l++)
                     {
                         colorsR.RemoveAt(l);
                         colorsR.RemoveAt(colorsR.Count - l - 1);
@@ -431,6 +443,8 @@ namespace Processor
                         colorsB.RemoveAt(l);
                         colorsB.RemoveAt(colorsB.Count - l - 1);
                     }
+
+
 
                     ///Calculate the mean value of the mask
                     meanR = colorsR.Sum(x => x.R) / colorsR.Count;
@@ -470,9 +484,10 @@ namespace Processor
                     {
                         for (int y = j - 1; y < j + 2; y++)
                         {
-                            maskR[k] = buffer.GetPixel(y, x);
-                            maskG[k] = buffer.GetPixel(y, x);
-                            maskB[k] = buffer.GetPixel(y, x);
+                            Color pixel = buffer.GetPixel(y, x);
+                            maskR[k] = pixel;
+                            maskG[k] = pixel;
+                            maskB[k] = pixel;
                             k++;
                         }
                     }
@@ -505,7 +520,7 @@ namespace Processor
             Double sumOfSquaresG = 0;
             Double sumOfSquaresB = 0;
             int mse;
-
+           
             for (int i = 0; i < M; i++)
             {
                 for (int j = 0; j < N; j++)
@@ -519,7 +534,6 @@ namespace Processor
                 }
             }
             mse = (int)((sumOfSquaresR + sumOfSquaresG + sumOfSquaresB) / (3 * (M * N)));
-
             return mse;
         }
         public static Double PeakMeanSquareError(string firstImage, string secondImage)
