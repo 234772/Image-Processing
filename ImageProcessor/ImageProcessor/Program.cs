@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
+using System.Threading;
 
 namespace Presentation
 {
@@ -19,9 +20,12 @@ namespace Presentation
             Parser.Default.ParseArguments<CommandLineOptions>(args)
                    .WithParsed<CommandLineOptions>(o =>
                    {
+
+ 
                        //ImageProcessor.Ih.loadImage(o.loadPath);
-                       Console.WriteLine("start");
+                       stopwatch.Start();
                        ImageProcessor.Process(o);
+                       stopwatch.Stop();
                        //var image = o.images.ToList();
                        //Console.WriteLine(ImageProcessor.MaximumDifference(image[0], image[1]));
                        //ImageProcessor.AlphaTrimmedFilter();
@@ -30,6 +34,7 @@ namespace Presentation
                        //    ImageProcessor.Ih.saveImage(projectPath + "\\" + o.savePath);
                        //}
                    });
+            Console.WriteLine("Elapsed Time is {0} ms", stopwatch.ElapsedMilliseconds);
             Console.ReadLine();
         }
     }
