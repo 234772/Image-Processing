@@ -194,18 +194,61 @@ namespace Processor
         }
         public static void VerticalFlip(Bitmap image, string savePath)
         {
-            Bitmap bmp = new Bitmap(image.Width, image.Height);
-            int verticalPixel = 0;
+            Bitmap TempBmp = (Bitmap)image.Clone();
 
-            for (int x = 0; x < image.Width - 1; x++)
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData TempBmpData = TempBmp.LockBits(new Rectangle(0, 0, TempBmp.Width, TempBmp.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+
+            unsafe
             {
-                for (int y = image.Height - 1; y >=0; y--)
+                int BmpWidth = image.Width;
+                int BmpHeight = image.Height;
+                int Stride = bmpData.Stride;
+
+                byte* ptr = (byte*)bmpData.Scan0.ToPointer();
+                byte* TempPtr = (byte*)TempBmpData.Scan0.ToPointer();
+
+                int stopAddress = (int)ptr + bmpData.Stride * bmpData.Height;
+                int i = 0, X, Y;
+                int Val = 0;
+                int YOffset = 0;
+
+                while ((int)ptr != stopAddress)
                 {
-                    bmp.SetPixel(x, verticalPixel++, image.GetPixel(x, y));
+                    X = i % BmpWidth;
+                    Y = i / BmpWidth;
+
+                    YOffset = BmpHeight - (Y + 1);
+
+                    if (YOffset < 0 && YOffset >= BmpHeight)
+                        YOffset = 0;
+
+                    Val = (YOffset * Stride) + (X * 3);
+
+                    ptr[0] = TempPtr[Val];
+                    ptr[1] = TempPtr[Val + 1];
+                    ptr[2] = TempPtr[Val + 2];
+
+                    ptr += 3;
+                    i++;
                 }
-                verticalPixel = 0;
             }
-            ih.saveImage(bmp, savePath);
+
+            image.UnlockBits(bmpData);
+            TempBmp.UnlockBits(TempBmpData);
+            ih.saveImage(image, savePath);
+            //Bitmap bmp = new Bitmap(image.Width, image.Height);
+            //int verticalPixel = 0;
+
+            //for (int x = 0; x < image.Width - 1; x++)
+            //{
+            //    for (int y = image.Height - 1; y >=0; y--)
+            //    {
+            //        bmp.SetPixel(x, verticalPixel++, image.GetPixel(x, y));
+            //    }
+            //    verticalPixel = 0;
+            //}
+            //ih.saveImage(bmp, savePath);
         }
         public static void DiagonalFlip(Bitmap image, string savePath)
         {
