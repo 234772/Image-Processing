@@ -194,61 +194,59 @@ namespace Processor
         }
         public static void VerticalFlip(Bitmap image, string savePath)
         {
-            Bitmap TempBmp = (Bitmap)image.Clone();
 
             BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            BitmapData TempBmpData = TempBmp.LockBits(new Rectangle(0, 0, TempBmp.Width, TempBmp.Height), ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
 
-            unsafe
+            byte[] rgbValues = new byte[bmpData.Stride * image.Height];
+            byte[] newBmp = new byte[bmpData.Stride * image.Height];
+
+            byte[] bytesR = new byte[image.Height * image.Width];
+            byte[] bytesB = new byte[image.Height * image.Width];
+            byte[] bytesG = new byte[image.Height * image.Width];
+
+            IntPtr ptr = bmpData.Scan0;
+
+            // Copy the RGB values into the array.
+            Marshal.Copy(ptr, rgbValues, 0, image.Height * bmpData.Stride);
+
+            int k = 0;
+
+            for(int i = 0; i < image.Width * image.Height; i++)
             {
-                int BmpWidth = image.Width;
-                int BmpHeight = image.Height;
-                int Stride = bmpData.Stride;
-
-                byte* ptr = (byte*)bmpData.Scan0.ToPointer();
-                byte* TempPtr = (byte*)TempBmpData.Scan0.ToPointer();
-
-                int stopAddress = (int)ptr + bmpData.Stride * bmpData.Height;
-                int i = 0, X, Y;
-                int Val = 0;
-                int YOffset = 0;
-
-                while ((int)ptr != stopAddress)
-                {
-                    X = i % BmpWidth;
-                    Y = i / BmpWidth;
-
-                    YOffset = BmpHeight - (Y + 1);
-
-                    if (YOffset < 0 && YOffset >= BmpHeight)
-                        YOffset = 0;
-
-                    Val = (YOffset * Stride) + (X * 3);
-
-                    ptr[0] = TempPtr[Val];
-                    ptr[1] = TempPtr[Val + 1];
-                    ptr[2] = TempPtr[Val + 2];
-
-                    ptr += 3;
-                    i++;
-                }
+                bytesB[i] = rgbValues[k];
+                bytesG[i] = rgbValues[k+1];
+                bytesR[i] = rgbValues[k+2];
+                k += 3;
             }
 
-            image.UnlockBits(bmpData);
-            TempBmp.UnlockBits(TempBmpData);
-            ih.saveImage(image, savePath);
-            //Bitmap bmp = new Bitmap(image.Width, image.Height);
-            //int verticalPixel = 0;
+            int val;
+            int p = 0;
 
-            //for (int x = 0; x < image.Width - 1; x++)
-            //{
-            //    for (int y = image.Height - 1; y >=0; y--)
-            //    {
-            //        bmp.SetPixel(x, verticalPixel++, image.GetPixel(x, y));
-            //    }
-            //    verticalPixel = 0;
-            //}
-            //ih.saveImage(bmp, savePath);
+            for(int i = 0; i < image.Height; i++)
+            {
+                for(int z = 0; z < bmpData.Stride; z+=3)
+                {
+                    val = ((image.Height - i) * bmpData.Stride) - bmpData.Stride + z;
+                    newBmp[val] = bytesB[p];
+                    newBmp[val + 1] = bytesG[p];
+                    newBmp[val + 2] = bytesR[p];
+                    p++;
+                }
+            }
+            Marshal.Copy(newBmp, 0, ptr, bmpData.Stride * bmpData.Width);
+            image.UnlockBits(bmpData);
+  
+            ih.saveImage(image, savePath);
+        }
+        public static bool IsAlphaBitmap(ref System.Drawing.Imaging.BitmapData BmpData)
+        {
+            byte[] Bytes = new byte[BmpData.Height * BmpData.Stride];
+            Marshal.Copy(BmpData.Scan0, Bytes, 0, Bytes.Length);
+            for (var p = 3; p < Bytes.Length; p += 4)
+            {
+                if (Bytes[p] != 255) return true;
+            }
+            return false;
         }
         public static void DiagonalFlip(Bitmap image, string savePath)
         {
