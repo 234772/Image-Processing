@@ -194,18 +194,59 @@ namespace Processor
         }
         public static void VerticalFlip(Bitmap image, string savePath)
         {
-            Bitmap bmp = new Bitmap(image.Width, image.Height);
-            int verticalPixel = 0;
 
-            for (int x = 0; x < image.Width - 1; x++)
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            byte[] rgbValues = new byte[bmpData.Stride * image.Height];
+            byte[] newBmp = new byte[bmpData.Stride * image.Height];
+
+            byte[] bytesR = new byte[image.Height * image.Width];
+            byte[] bytesB = new byte[image.Height * image.Width];
+            byte[] bytesG = new byte[image.Height * image.Width];
+
+            IntPtr ptr = bmpData.Scan0;
+
+            // Copy the RGB values into the array.
+            Marshal.Copy(ptr, rgbValues, 0, image.Height * bmpData.Stride);
+
+            int k = 0;
+
+            for(int i = 0; i < image.Width * image.Height; i++)
             {
-                for (int y = image.Height - 1; y >=0; y--)
-                {
-                    bmp.SetPixel(x, verticalPixel++, image.GetPixel(x, y));
-                }
-                verticalPixel = 0;
+                bytesB[i] = rgbValues[k];
+                bytesG[i] = rgbValues[k+1];
+                bytesR[i] = rgbValues[k+2];
+                k += 3;
             }
-            ih.saveImage(bmp, savePath);
+
+            int val;
+            int p = 0;
+
+            for(int i = 0; i < image.Height; i++)
+            {
+                for(int z = 0; z < bmpData.Stride; z+=3)
+                {
+                    val = ((image.Height - i) * bmpData.Stride) - bmpData.Stride + z;
+                    newBmp[val] = bytesB[p];
+                    newBmp[val + 1] = bytesG[p];
+                    newBmp[val + 2] = bytesR[p];
+                    p++;
+                }
+            }
+            Marshal.Copy(newBmp, 0, ptr, bmpData.Stride * bmpData.Width);
+            image.UnlockBits(bmpData);
+  
+            ih.saveImage(image, savePath);
+        }
+        public static bool IsAlphaBitmap(ref System.Drawing.Imaging.BitmapData BmpData)
+        {
+            byte[] Bytes = new byte[BmpData.Height * BmpData.Stride];
+            Marshal.Copy(BmpData.Scan0, Bytes, 0, Bytes.Length);
+            for (var p = 3; p < Bytes.Length; p += 4)
+            {
+                if (Bytes[p] != 255) return true;
+            }
+            return false;
         }
         public static void DiagonalFlip(Bitmap image, string savePath)
         {
