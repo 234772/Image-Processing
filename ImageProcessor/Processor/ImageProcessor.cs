@@ -99,32 +99,29 @@ namespace Processor
 
             Marshal.Copy(rgbValues, 0, ptr, bytes);
             bmp.UnlockBits(bmpData);
-            //for (int y = 0; y < bmp.Height; y++)
-            //{
-            //    for (int x = 0; x < bmp.Width; x++)
-            //    {
-            //        Color color = image.GetPixel(y, x);
-            //        Color newColor = Color.FromArgb(Truncate(color.R + changeValue), Truncate(color.G + changeValue), Truncate(color.B + changeValue));
-            //        //Console.WriteLine(color.ToString());
-            //        bmp.SetPixel(y, x, newColor);
-            //    }
-            //}
 
             ih.saveImage(bmp, savePath);
         }
         public static void NegativeImage(Bitmap image, string savePath)
         {
-            Bitmap bmp = new Bitmap(image.Width, image.Height);
+            Bitmap bmp = new Bitmap(image);
+            BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
-            for(int y = 0; y < bmp.Height; y++)
+            int bytes = bmpData.Stride * bmpData.Height;
+            byte[] rgbValues = new byte[bytes];
+
+            IntPtr ptr = bmpData.Scan0;
+
+            // Copy the RGB values into the array.
+            Marshal.Copy(ptr, rgbValues, 0, bytes);
+
+            for( int i = 0; i < bytes; i++)
             {
-                for(int x = 0; x < bmp.Width; x++)
-                {
-                    Color color = image.GetPixel(y, x);
-                    Color newColor = Color.FromArgb(255 - color.R, 255 - color.G, 255 - color.B);
-                    bmp.SetPixel(y, x, newColor);
-                }
+                rgbValues[i] = (byte)(255 - rgbValues[i]);
             }
+
+            Marshal.Copy(rgbValues, 0, ptr, bytes);
+            bmp.UnlockBits(bmpData);
 
             ih.saveImage(bmp, savePath);
         }
