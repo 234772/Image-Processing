@@ -45,9 +45,11 @@ namespace Processor
                 VerticalFlip(bmp, o.secondPath);
             if (o.dflip)
                 DiagonalFlip(bmp, o.secondPath);
-            if(o.alpha > 0)
-                // TODO: Decide if we want to have fixed alpha, hardcoded in the method (then we make o.alpha into bool)
-                AlphaTrimmedFilter(bmp, o.secondPath, o.alpha);
+            if (o.Values.Count() > 0)
+            {
+                List<int> values = new List<int>(o.Values);
+                AlphaTrimmedFilter(bmp, o.secondPath, values[0], values[1], values[2]); 
+            }
             if (o.geometricMeanFilter)
                 GeometricMeanFilter(bmp, o.secondPath);
             if (o.meanSquare)
@@ -238,16 +240,6 @@ namespace Processor
   
             ih.saveImage(image, savePath);
         }
-        public static bool IsAlphaBitmap(ref System.Drawing.Imaging.BitmapData BmpData)
-        {
-            byte[] Bytes = new byte[BmpData.Height * BmpData.Stride];
-            Marshal.Copy(BmpData.Scan0, Bytes, 0, Bytes.Length);
-            for (var p = 3; p < Bytes.Length; p += 4)
-            {
-                if (Bytes[p] != 255) return true;
-            }
-            return false;
-        }
         public static void DiagonalFlip(Bitmap image, string savePath)
         {
             Bitmap bmp = new Bitmap(image.Width, image.Height);
@@ -415,10 +407,10 @@ namespace Processor
             res.SetPixel(res.Width - 1, res.Height - 1, res.GetPixel(res.Height - 2, res.Width - 1));
             return res;
         }
-        public static void AlphaTrimmedFilter(Bitmap image, string savePath, int alpha)
+        public static void AlphaTrimmedFilter(Bitmap image, string savePath, int alpha, int maskM, int maskN)
         {
-            int m = 3;
-            int n = 3;
+            int m = maskM;
+            int n = maskN;
 
             int height = ih.Bmp.Height;
             int width = ih.Bmp.Width;
@@ -439,26 +431,44 @@ namespace Processor
                     int meanG = 0;
                     int meanB = 0;
 
+                    if (m % 2 == 0) m++;
+                    if (n % 2 == 0) n++;
                     Color[] maskR = new Color[m * n];
                     Color[] maskG = new Color[m * n];
                     Color[] maskB = new Color[m * n];
                  
                   
 
-                    for (int x = i - 1; x < i + 2; x++)
+                    //for (int x = i - 1; x < i + 2; x++)
+                    //{
+                    //    for(int y = j - 1; y < j + 2; y++)
+                    //    {
+                    //        Color value;
+                    //        value = buffer.GetPixel(y, x);
+                    //        maskR[k] = value;
+                    //        maskG[k] = value;
+                    //        maskB[k] = value;
+                    //        k++;
+                    //    }
+                    //}
+
+                    int radiusN = (int)Math.Floor(maskN / 2.0);
+                    int radiusM = (int)Math.Floor(maskM / 2.0);
+
+                    for (int x = i - radiusN; x < i + radiusN + 1; x++)
                     {
-                        for(int y = j - 1; y < j + 2; y++)
+                        if (x < 0) continue;
+                        if (x >= buffer.Height) break;
+                        for (int y = j - radiusM; y < j + radiusM + 1; y++)
                         {
+                            //Console.WriteLine(k);
+                            if (y < 0) continue;
+                            if (y >= buffer.Width) break;
                             Color value;
                             value = buffer.GetPixel(y, x);
                             maskR[k] = value;
                             maskG[k] = value;
                             maskB[k] = value;
-
-
-                            //maskR[k] = buffer.GetPixel(y, x);
-                            //maskG[k] = buffer.GetPixel(y, x);
-                            //maskB[k] = buffer.GetPixel(y, x);
                             k++;
                         }
                     }
