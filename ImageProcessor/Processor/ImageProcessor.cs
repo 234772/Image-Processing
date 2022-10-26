@@ -196,62 +196,49 @@ namespace Processor
         }
         public static void HorizontalFlip(Bitmap image, string savePath)
         {
-            //BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
-            //byte[] rgbValues = new byte[bmpData.Stride * image.Height];
-            //byte[] newBmp = new byte[bmpData.Stride * image.Height];
+            byte[] rgbValues = new byte[bmpData.Stride * image.Height];
+            byte[] newBmp = new byte[bmpData.Stride * image.Height];
 
-            //byte[] bytesR = new byte[image.Height * image.Width];
-            //byte[] bytesB = new byte[image.Height * image.Width];
-            //byte[] bytesG = new byte[image.Height * image.Width];
+            byte[] bytesR = new byte[image.Height * image.Width];
+            byte[] bytesB = new byte[image.Height * image.Width];
+            byte[] bytesG = new byte[image.Height * image.Width];
 
-            //IntPtr ptr = bmpData.Scan0;
+            IntPtr ptr = bmpData.Scan0;
 
-            //// Copy the RGB values into the array.
-            //Marshal.Copy(ptr, rgbValues, 0, image.Height * bmpData.Stride);
+            // Copy the RGB values into the array.
+            Marshal.Copy(ptr, rgbValues, 0, image.Height * bmpData.Stride);
 
-            //int k = 0;
+            int k = 0;
 
-            //for (int i = 0; i < image.Width * image.Height; i++)
-            //{
-            //    bytesB[i] = rgbValues[k];
-            //    bytesG[i] = rgbValues[k + 1];
-            //    bytesR[i] = rgbValues[k + 2];
-            //    k += 3;
-            //}
-
-            //int val;
-            //int p = 0;
-
-            //for(int y = 0; y < bmpData.Height; y++)
-            //{
-            //    for(int x = 0; x < bmpData.Stride; x+=3)
-            //    {
-            //        val = bmpData.Stride + y * bmpData.Stride - x - 1;
-            //        //Console.WriteLine(val);
-            //        newBmp[val] = bytesR[p];
-            //        newBmp[val - 1] = bytesG[p];
-            //        newBmp[val - 2] = bytesB[p];
-            //        p++;
-            //    }
-            //}
-
-            //Marshal.Copy(newBmp, 0, ptr, bmpData.Stride * bmpData.Width);
-            //image.UnlockBits(bmpData);
-
-            //ih.saveImage(image, savePath);
-            Bitmap bmp = new Bitmap(image.Width, image.Height);
-            int horizontalPixel = 0;
-
-            for (int y = 0; y < image.Height - 1; y++)
+            for (int i = 0; i < image.Width * image.Height; i++)
             {
-                for (int x = image.Width - 1; x >= 0; x--)
-                {
-                    bmp.SetPixel(horizontalPixel++, y, image.GetPixel(x, y));
-                }
-                horizontalPixel = 0;
+                bytesB[i] = rgbValues[k];
+                bytesG[i] = rgbValues[k + 1];
+                bytesR[i] = rgbValues[k + 2];
+                k += 3;
             }
-            ih.saveImage(bmp, savePath);
+
+            int val;
+            int p = 0;
+
+            for(int y = 0; y < bmpData.Height; y++)
+            {
+                for(int x = 0; x < bmpData.Stride; x+=3)
+                {
+                    val = bmpData.Stride + y * bmpData.Stride - x - 1;
+                    newBmp[val] = bytesR[p];
+                    newBmp[val - 1] = bytesG[p];
+                    newBmp[val - 2] = bytesB[p];
+                    p++;
+                }
+            }
+
+            Marshal.Copy(newBmp, 0, ptr, bmpData.Stride * bmpData.Width);
+            image.UnlockBits(bmpData);
+
+            ih.saveImage(image, savePath);
         }
         public static void VerticalFlip(Bitmap image, string savePath)
         {
@@ -301,6 +288,48 @@ namespace Processor
         }
         public static void DiagonalFlip(Bitmap image, string savePath)
         {
+            //BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            //byte[] rgbValues = new byte[bmpData.Stride * image.Height];
+            //byte[] newBmp = new byte[bmpData.Stride * image.Height];
+
+            //byte[] bytesR = new byte[image.Height * image.Width];
+            //byte[] bytesB = new byte[image.Height * image.Width];
+            //byte[] bytesG = new byte[image.Height * image.Width];
+
+            //IntPtr ptr = bmpData.Scan0;
+
+            //// Copy the RGB values into the array.
+            //Marshal.Copy(ptr, rgbValues, 0, image.Height * bmpData.Stride);
+
+            //int k = 0;
+
+            //for (int i = 0; i < image.Width * image.Height; i++)
+            //{
+            //    bytesB[i] = rgbValues[k];
+            //    bytesG[i] = rgbValues[k + 1];
+            //    bytesR[i] = rgbValues[k + 2];
+            //    k += 3;
+            //}
+
+            //int val;
+            //int p = 0;
+
+            //for (int y = image.Height - 2; y > 0; y--)
+            //{
+            //    for (int x = 0; x < bmpData.Stride; x += 3)
+            //    {
+            //        val = bmpData.Stride + y * bmpData.Stride - x - 1;
+            //        newBmp[val] = bytesR[p];
+            //        newBmp[val - 1] = bytesG[p];
+            //        newBmp[val - 2] = bytesB[p];
+            //        p++;
+            //    }
+            //}
+            //Marshal.Copy(newBmp, 0, ptr, bmpData.Stride * bmpData.Width);
+            //image.UnlockBits(bmpData);
+
+            //ih.saveImage(image, savePath);
             Bitmap bmp = new Bitmap(image.Width, image.Height);
             int pixel1 = 0;
             int pixel2 = 0;
