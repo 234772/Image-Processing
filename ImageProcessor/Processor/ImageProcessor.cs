@@ -68,29 +68,47 @@ namespace Processor
 
 
         }
-        private static int Truncate(int pixelValue)
+        private static byte Truncate(byte pixelValue1, int changeValue)
         {
-            if(pixelValue > 255)
+            int p1 = pixelValue1;
+            int p2 = changeValue;
+            if(p1 + p2 > 255)
                 return 255;
-            else if (pixelValue < 0)
+            else if (p1 + p2 < 0)
                 return 0;
             else
-                return pixelValue;
+                return (byte)(p1 + p2);
         }
         public static void ChangeBrightness(Bitmap image, string savePath, int changeValue)
         {
             Bitmap bmp = new Bitmap(image);
+            BitmapData bmpData = bmp.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
-            for (int y = 0; y < bmp.Height; y++)
+            int bytes = bmpData.Stride * bmpData.Height;
+            byte[] rgbValues = new byte[bytes];
+
+            IntPtr ptr = bmpData.Scan0;
+
+            // Copy the RGB values into the array.
+            Marshal.Copy(ptr, rgbValues, 0, bytes);
+
+            for(int i = 0; i < bytes; i++)
             {
-                for (int x = 0; x < bmp.Width; x++)
-                {
-                    Color color = image.GetPixel(y, x);
-                    Color newColor = Color.FromArgb(Truncate(color.R + changeValue), Truncate(color.G + changeValue), Truncate(color.B + changeValue));
-                    //Console.WriteLine(color.ToString());
-                    bmp.SetPixel(y, x, newColor);
-                }
+                rgbValues[i] = Truncate(rgbValues[i], changeValue);
             }
+
+            Marshal.Copy(rgbValues, 0, ptr, bytes);
+            bmp.UnlockBits(bmpData);
+            //for (int y = 0; y < bmp.Height; y++)
+            //{
+            //    for (int x = 0; x < bmp.Width; x++)
+            //    {
+            //        Color color = image.GetPixel(y, x);
+            //        Color newColor = Color.FromArgb(Truncate(color.R + changeValue), Truncate(color.G + changeValue), Truncate(color.B + changeValue));
+            //        //Console.WriteLine(color.ToString());
+            //        bmp.SetPixel(y, x, newColor);
+            //    }
+            //}
 
             ih.saveImage(bmp, savePath);
         }
@@ -386,22 +404,22 @@ namespace Processor
         }
         public static Bitmap ExtendBitmapByOne(Bitmap image)
         {
-            Bitmap res = new Bitmap(ih.Bmp.Width + 2, ih.Bmp.Height + 2);
+            Bitmap res = new Bitmap(image.Width + 2, image.Height + 2);
 
-            for(int i = 1; i <= ih.Bmp.Height; i++)
+            for(int i = 1; i <= image.Height; i++)
             {
-                for(int j = 1; j <= ih.Bmp.Width; j++)
+                for(int j = 1; j <= image.Width; j++)
                 {
                     if (i == 1)
-                        res.SetPixel(j, i - 1, ih.Bmp.GetPixel(j - 1, i - 1));
-                    else if (i == ih.Bmp.Height)
-                        res.SetPixel(j, i + 1, ih.Bmp.GetPixel(j - 1, i - 1));
+                        res.SetPixel(j, i - 1, image.GetPixel(j - 1, i - 1));
+                    else if (i == image.Height)
+                        res.SetPixel(j, i + 1, image.GetPixel(j - 1, i - 1));
                     if (j == 1)
-                        res.SetPixel(j - 1, i, ih.Bmp.GetPixel(j - 1, i - 1));
-                    else if (j == ih.Bmp.Width)
-                        res.SetPixel(j + 1, i, ih.Bmp.GetPixel(j - 1, i - 1));
+                        res.SetPixel(j - 1, i, image.GetPixel(j - 1, i - 1));
+                    else if (j == image.Width)
+                        res.SetPixel(j + 1, i, image.GetPixel(j - 1, i - 1));
 
-                    res.SetPixel(i, j, ih.Bmp.GetPixel(i - 1, j - 1));
+                    res.SetPixel(i, j, image.GetPixel(i - 1, j - 1));
                 }
             }
             res.SetPixel(0, 0, res.GetPixel(1, 0));
@@ -417,6 +435,9 @@ namespace Processor
 
             if (m % 2 == 0) m++;
             if (n % 2 == 0) n++;
+
+            int radiusN = (int)Math.Floor(maskN / 2.0);
+            int radiusM = (int)Math.Floor(maskM / 2.0);
 
             int height = ih.Bmp.Height;
             int width = ih.Bmp.Width;
@@ -440,9 +461,6 @@ namespace Processor
                     Color[] maskR = new Color[m * n];
                     Color[] maskG = new Color[m * n];
                     Color[] maskB = new Color[m * n];
-
-                    int radiusN = (int)Math.Floor(maskN / 2.0);
-                    int radiusM = (int)Math.Floor(maskM / 2.0);
 
                     for (int x = i - radiusN; x < i + radiusN + 1; x++)
                     {
@@ -505,6 +523,9 @@ namespace Processor
             if (m % 2 == 0) m++;
             if (n % 2 == 0) n++;
 
+            int radiusN = (int)Math.Floor(maskN / 2.0);
+            int radiusM = (int)Math.Floor(maskM / 2.0);
+
             Bitmap res = new Bitmap(image.Width, image.Height);
             Bitmap buffer = ExtendBitmapByOne(image);
 
@@ -519,9 +540,6 @@ namespace Processor
                     Color[] maskR = new Color[m * n];
                     Color[] maskG = new Color[m * n];
                     Color[] maskB = new Color[m * n];
-
-                    int radiusN = (int)Math.Floor(maskN / 2.0);
-                    int radiusM = (int)Math.Floor(maskM / 2.0);
 
                     for (int x = i - radiusN; x < i + radiusN + 1; x++)
                     {
