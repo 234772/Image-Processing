@@ -45,13 +45,16 @@ namespace Processor
                 VerticalFlip(bmp, o.secondPath);
             if (o.dflip)
                 DiagonalFlip(bmp, o.secondPath);
-            if (o.Values.Count() > 0)
+            if (o.ValuesA.Count() > 0)
             {
-                List<int> values = new List<int>(o.Values);
+                List<int> values = new List<int>(o.ValuesA);
                 AlphaTrimmedFilter(bmp, o.secondPath, values[0], values[1], values[2]); 
             }
-            if (o.geometricMeanFilter)
-                GeometricMeanFilter(bmp, o.secondPath);
+            if (o.ValuesG.Count() > 0)
+            {
+                List<int> values = new List<int>(o.ValuesG);
+                GeometricMeanFilter(bmp, o.secondPath, values[0], values[1]);
+            }
             if (o.meanSquare)
                 Console.WriteLine(MeanSquareError(o.firstPath, o.secondPath));
             if (o.peakMeanSquare)
@@ -412,6 +415,9 @@ namespace Processor
             int m = maskM;
             int n = maskN;
 
+            if (m % 2 == 0) m++;
+            if (n % 2 == 0) n++;
+
             int height = ih.Bmp.Height;
             int width = ih.Bmp.Width;
 
@@ -431,26 +437,9 @@ namespace Processor
                     int meanG = 0;
                     int meanB = 0;
 
-                    if (m % 2 == 0) m++;
-                    if (n % 2 == 0) n++;
                     Color[] maskR = new Color[m * n];
                     Color[] maskG = new Color[m * n];
                     Color[] maskB = new Color[m * n];
-                 
-                  
-
-                    //for (int x = i - 1; x < i + 2; x++)
-                    //{
-                    //    for(int y = j - 1; y < j + 2; y++)
-                    //    {
-                    //        Color value;
-                    //        value = buffer.GetPixel(y, x);
-                    //        maskR[k] = value;
-                    //        maskG[k] = value;
-                    //        maskB[k] = value;
-                    //        k++;
-                    //    }
-                    //}
 
                     int radiusN = (int)Math.Floor(maskN / 2.0);
                     int radiusM = (int)Math.Floor(maskM / 2.0);
@@ -508,13 +497,13 @@ namespace Processor
             }
             ih.saveImage(res, savePath);
         }
-        public static void GeometricMeanFilter(Bitmap image, string savePath)
+        public static void GeometricMeanFilter(Bitmap image, string savePath, int m, int n)
         {
-            int m = 3;
-            int n = 3;
+            int maskM = m;
+            int maskN = n;
 
-            int height = ih.Bmp.Height;
-            int width = ih.Bmp.Width;
+            if (m % 2 == 0) m++;
+            if (n % 2 == 0) n++;
 
             Bitmap res = new Bitmap(image.Width, image.Height);
             Bitmap buffer = ExtendBitmapByOne(image);
@@ -531,14 +520,23 @@ namespace Processor
                     Color[] maskG = new Color[m * n];
                     Color[] maskB = new Color[m * n];
 
-                    for (int x = i - 1; x < i + 2; x++)
+                    int radiusN = (int)Math.Floor(maskN / 2.0);
+                    int radiusM = (int)Math.Floor(maskM / 2.0);
+
+                    for (int x = i - radiusN; x < i + radiusN + 1; x++)
                     {
-                        for (int y = j - 1; y < j + 2; y++)
+                        if (x < 0) continue;
+                        if (x >= buffer.Height) break;
+                        for (int y = j - radiusM; y < j + radiusM + 1; y++)
                         {
-                            Color pixel = buffer.GetPixel(y, x);
-                            maskR[k] = pixel;
-                            maskG[k] = pixel;
-                            maskB[k] = pixel;
+                            //Console.WriteLine(k);
+                            if (y < 0) continue;
+                            if (y >= buffer.Width) break;
+                            Color value;
+                            value = buffer.GetPixel(y, x);
+                            maskR[k] = value;
+                            maskG[k] = value;
+                            maskB[k] = value;
                             k++;
                         }
                     }
@@ -553,8 +551,11 @@ namespace Processor
                         productG *= maskG[x].G;
                         productB *= maskB[x].B;
                     }
+
+                    double divider = 1.0 / (m * n);
+
                     ///Assign the geometric product value to the target pixel
-                    res.SetPixel(j - 1, i - 1, Color.FromArgb((int)Math.Pow(productR, 0.11), (int)Math.Pow(productG, 0.11), (int)Math.Pow(productB, 0.11)));
+                    res.SetPixel(j - 1, i - 1, Color.FromArgb((int)Math.Pow(productR, divider), (int)Math.Pow(productG, divider), (int)Math.Pow(productB, divider)));
                 }
             }
             ih.saveImage(res, savePath);

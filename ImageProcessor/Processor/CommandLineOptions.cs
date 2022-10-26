@@ -24,10 +24,10 @@ namespace Processor
         public IEnumerable<int> Dimensions { get; set; }
         [Option(shortName: 'h', longName: "hflip", Required = false, HelpText = "Horizontally flips the image (mirrors it)", Default = false)]
         public bool hflip { get; set; }
-        [Option(shortName: 'a', longName: "alpha", Required = false, HelpText = "Denoises the image using alpha-trimmed mean filter, by passing in a number [1,3]", Default = 0)]
-        public IEnumerable<int> Values { get; set; }
-        [Option(shortName: 'g', longName: "gmean", Required = false, HelpText = "Denoises the image using the geometric mean filter", Default = false)]
-        public bool geometricMeanFilter { get; set; }
+        [Option(shortName: 'a', longName: "alpha", Required = false, HelpText = "Denoises the image using alpha-trimmed mean filter, by passing in a number [1,3]", Default = null)]
+        public IEnumerable<int> ValuesA { get; set; }
+        [Option(shortName: 'g', longName: "gmean", Required = false, HelpText = "Denoises the image using the geometric mean filter", Default = null)]
+        public IEnumerable<int> ValuesG { get; set; }
         [Option(shortName: 'v', longName: "vflip", Required = false, HelpText = "Flips the image vertically", Default = false)]
         public bool vflip { get; set; }
         [Option(shortName: 'd', longName: "dflip", Required = false, HelpText = "Flips the image diagonally", Default = false)]
