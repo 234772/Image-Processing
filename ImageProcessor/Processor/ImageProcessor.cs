@@ -31,7 +31,7 @@ namespace Processor
             if (o.brightness != 0)
                 ChangeBrightness(bmp, o.secondPath, o.brightness);
             if (o.contrast)
-                Contrast2(bmp, o.secondPath);
+                ChangeContrast(bmp, o.secondPath);
             if (o.negative)
                 NegativeImage(bmp, o.secondPath);
             if (o.Dimensions.Count() > 0)
@@ -331,32 +331,40 @@ namespace Processor
 
             ih.saveImage(image, savePath);
         }
-        public static void Contrast2(Bitmap image, string savePath)
+        public static void ChangeContrast(Bitmap image, string savePath)
         {
             int width = image.Width;
             int height = image.Height;
 
-            Bitmap bmp = new Bitmap(width, height);
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
-            double[] probability = new double[256];
+            int bytes = bmpData.Stride * bmpData.Height;
+            byte[] rgbValues = new byte[bytes];
+            byte[] newBmp = new byte[bytes];
+
             double[] probabilityR = new double[256];
             double[] probabilityG = new double[256];
             double[] probabilityB = new double[256];
 
-            byte[,] intensity = new byte[width, height];
             byte[,] r = new byte[width, height];
             byte[,] g = new byte[width, height];
             byte[,] b = new byte[width, height];
+
+            IntPtr ptr = bmpData.Scan0;
+
+            // Copy the RGB values into the array.
+            Marshal.Copy(ptr, rgbValues, 0, image.Height * bmpData.Stride);
+
+            int k = 0;
 
             for (int i = 0; i < height; i++)
             {
                 for(int j = 0; j < width; j++)
                 {
-                    r[i, j] = (byte)image.GetPixel(i, j).R;
-                    g[i, j] = (byte)image.GetPixel(i, j).G;
-                    b[i, j] = (byte)image.GetPixel(i, j).B;
-
-                    intensity[i, j] = (byte)((r[i, j] + g[i, j] + b[i, j]) / 3);
+                    b[j, i] = rgbValues[k];
+                    g[j, i] = rgbValues[k + 1];
+                    r[j, i] = rgbValues[k + 2];
+                    k += 3;
                 }
             }
 
@@ -364,34 +372,27 @@ namespace Processor
             {
                 for (int j = 0; j < width; j++)
                 {
-                    probability[intensity[i, j]]++;
                     probabilityR[r[i, j]]++;
                     probabilityG[g[i, j]]++;
                     probabilityB[b[i, j]]++;
                 }
             }
 
-            for(int i = 0; i < probability.Length; i++)
+            for(int i = 0; i < 256; i++)
             {
-                probability[i] /= (width * height);
                 probabilityR[i] /= (width * height);
                 probabilityG[i] /= (width * height);
                 probabilityB[i] /= (width * height);
             }
-
-            for (int i = 0; i < height; i++)
+            int p = 0;
+            for (int j = 0; j < height; j++)
             {
-                for (int j = 0; j < width; j++)
+                for (int i = 0; i < width; i++)
                 {
-                    double sum = 0;
                     double sumR = 0;
                     double sumG = 0;
                     double sumB = 0;
 
-                    for (int x = 0; x < intensity[i, j]; x++)
-                    {
-                        sum += probability[x];
-                    }
                     for (int x = 0; x < r[i, j]; x++)
                     {
                         sumR += probabilityR[x];
@@ -404,55 +405,15 @@ namespace Processor
                     {
                         sumB += probabilityB[x];
                     }
-                    bmp.SetPixel(i, j, Color.FromArgb((byte)(Math.Floor(255 * sumR)), (byte)(Math.Floor(255 * sumG)), (byte)(Math.Floor(255 * sumB))));
+                    newBmp[p++] = (byte)(Math.Floor(255 * sumB));
+                    newBmp[p++] = (byte)(Math.Floor(255 * sumG));
+                    newBmp[p++] = (byte)(Math.Floor(255 * sumR));
                 }
             }
-            ih.saveImage(bmp, savePath);
-        }
-        public static void Contrast3(Bitmap image)
-        {
-            int w = ih.Bmp.Width;
-            int h = ih.Bmp.Height;
-            BitmapData sd = ih.Bmp.LockBits(new Rectangle(0, 0, w, h),
-                ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
-            int bytes = sd.Stride * sd.Height;
-            byte[] buffer = new byte[bytes];
-            byte[] result = new byte[bytes];
-            Marshal.Copy(sd.Scan0, buffer, 0, bytes);
-            ih.Bmp.UnlockBits(sd);
-            int current = 0;
-            double[] pn = new double[256];
-            for (int p = 0; p < bytes; p += 4)
-            {
-                pn[buffer[p]]++;
-            }
-            for (int prob = 0; prob < pn.Length; prob++)
-            {
-                pn[prob] /= (w * h);
-            }
-            for (int y = 0; y < h; y++)
-            {
-                for (int x = 0; x < w; x++)
-                {
-                    current = y * sd.Stride + x * 4;
-                    double sum = 0;
-                    for (int i = 0; i < buffer[current]; i++)
-                    {
-                        sum += pn[i];
-                    }
-                    for (int c = 0; c < 3; c++)
-                    {
-                        result[current + c] = (byte)Math.Floor(255 * sum);
-                    }
-                    result[current + 3] = 255;
-                }
-            }
-            Bitmap res = new Bitmap(w, h);
-            BitmapData rd = res.LockBits(new Rectangle(0, 0, w, h),
-                ImageLockMode.WriteOnly, PixelFormat.Format32bppArgb);
-            Marshal.Copy(result, 0, rd.Scan0, bytes);
-            res.UnlockBits(rd);
-            ih.Bmp = res;
+            Marshal.Copy(newBmp, 0, ptr, bytes);
+            image.UnlockBits(bmpData);
+
+            ih.saveImage(image, savePath);
         }
         public static Bitmap ExtendBitmapByOne(Bitmap image)
         {
