@@ -651,6 +651,7 @@ namespace Processor
             double maxR = 0;
             double maxG = 0;
             double maxB = 0;
+
             double pmse;
 
           for(int x = 0; x < height * bmpData1.Stride - 2; x+=3)
@@ -684,36 +685,43 @@ namespace Processor
         {
             Bitmap bmp1 = new Bitmap(firstImage);
             Bitmap bmp2 = new Bitmap(secondImage);
+            int height = bmp1.Height;
+            int width = bmp1.Width;
 
-            int M = bmp1.Height;
-            int N = bmp1.Width;
+            BitmapData bmpData1 = bmp1.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData bmpData2 = bmp2.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
-            Double maxDiff = 0;
+            byte[] pixels1 = new byte[height * bmpData1.Stride];
+            byte[] pixels2 = new byte[height * bmpData1.Stride];
 
-            for (int i = 0; i < M; i++)
+            Marshal.Copy(bmpData1.Scan0, pixels1, 0, height * bmpData1.Stride);
+            Marshal.Copy(bmpData2.Scan0, pixels2, 0, height * bmpData2.Stride);
+
+            double maxDiff = 0;
+
+            for(int x = 0; x < height * bmpData1.Stride - 2; x+=3)
             {
-                for (int j = 0; j < N; j++)
-                {
-                    Color pixel1 = bmp1.GetPixel(j, i);
-                    Color pixel2 = bmp2.GetPixel(j, i);
 
-                    int redDiff;
-                    int greenDiff;
-                    int blueDiff;
+                    byte pixel1R = pixels1[x];
+                    byte pixel1G = pixels1[x + 1];
+                    byte pixel1B = pixels1[x + 2];
+                    byte pixel2R = pixels2[x];
+                    byte pixel2G = pixels2[x + 1];
+                    byte pixel2B = pixels2[x + 2];
 
-                    redDiff = Math.Abs(pixel1.R - pixel2.R);
-                    greenDiff = Math.Abs(pixel1.G - pixel2.G);
-                    blueDiff= Math.Abs(pixel1.B - pixel2.B);
+                    int redDiff = Math.Abs(pixel1R - pixel2R);
+                    int greenDiff = Math.Abs(pixel1G - pixel2G);
+                    int blueDiff= Math.Abs(pixel1B - pixel2B);
 
                     double sumDiff = (redDiff + greenDiff + blueDiff) / 3;
 
                     if(sumDiff > maxDiff)
                         maxDiff = sumDiff;
-                }
             }
-
+          
             return (int)maxDiff;
         }
+ 
         public static double SignalToNoiseRatio(string firstImage, string secondImage)
         {
             Bitmap bmp1 = new Bitmap(firstImage);
