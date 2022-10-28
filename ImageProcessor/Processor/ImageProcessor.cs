@@ -560,7 +560,6 @@ namespace Processor
                         if (x >= buffer.Height) break;
                         for (int y = j - radiusM; y < j + radiusM + 1; y++)
                         {
-                            //Console.WriteLine(k);
                             if (y < 0) continue;
                             if (y >= buffer.Width) break;
                             Color value;
@@ -599,9 +598,9 @@ namespace Processor
             int M = bmp1.Height;
             int N = bmp1.Width;
 
-            Double sumOfSquaresR = 0;
-            Double sumOfSquaresG = 0;
-            Double sumOfSquaresB = 0;
+            double sumOfSquaresR = 0;
+            double sumOfSquaresG = 0;
+            double sumOfSquaresB = 0;
             int mse;
            
             for (int i = 0; i < M; i++)
@@ -619,23 +618,23 @@ namespace Processor
             mse = (int)((sumOfSquaresR + sumOfSquaresG + sumOfSquaresB) / (3 * (M * N)));
             return mse;
         }
-        public static Double PeakMeanSquareError(string firstImage, string secondImage)
+        public static double PeakMeanSquareError(string firstImage, string secondImage)
         {
             Bitmap bmp1 = new Bitmap(firstImage);
             Bitmap bmp2 = new Bitmap(secondImage);
 
-            Double M = bmp1.Height;
-            Double N = bmp1.Width;
+            double M = bmp1.Height;
+            double N = bmp1.Width;
 
-            Double sumOfSquaresR = 0;
-            Double sumOfSquaresG = 0;
-            Double sumOfSquaresB = 0;
+            double sumOfSquaresR = 0;
+            double sumOfSquaresG = 0;
+            double sumOfSquaresB = 0;
 
-            Double maxR = 0;
-            Double maxG = 0;
-            Double maxB = 0;
+            double maxR = 0;
+            double maxG = 0;
+            double maxB = 0;
 
-            Double pmse;
+            double pmse;
 
             for (int i = 0; i < M; i++)
             {
@@ -685,7 +684,7 @@ namespace Processor
                     greenDiff = Math.Abs(pixel1.G - pixel2.G);
                     blueDiff= Math.Abs(pixel1.B - pixel2.B);
 
-                    Double sumDiff = (redDiff + greenDiff + blueDiff) / 3;
+                    double sumDiff = (redDiff + greenDiff + blueDiff) / 3;
 
                     if(sumDiff > maxDiff)
                         maxDiff = sumDiff;
@@ -702,11 +701,11 @@ namespace Processor
             int M = bmp1.Height;
             int N = bmp1.Width;
 
-            Double sumOfSquaresR = 0;
-            Double sumOfSquaresG = 0;
-            Double sumOfSquaresB = 0;
+            double sumOfSquaresR = 0;
+            double sumOfSquaresG = 0;
+            double sumOfSquaresB = 0;
 
-            Double sumOfSquarePixelR = 0;
+            double sumOfSquarePixelR = 0;
             double sumOfSquarePixelG = 0;
             double sumOfSquarePixelB = 0;
 
@@ -732,7 +731,7 @@ namespace Processor
 
             return snr;
         }
-        public static Double PeakSignalToNoiseRatio(string firstImage, string secondImage)
+        public static double PeakSignalToNoiseRatio(string firstImage, string secondImage)
         {
             Bitmap bmp1 = new Bitmap(firstImage);
             Bitmap bmp2 = new Bitmap(secondImage);
@@ -740,13 +739,13 @@ namespace Processor
             int M = bmp1.Height;
             int N = bmp1.Width;
 
-            Double sumOfSquaresR = 0;
-            Double sumOfSquaresG = 0;
-            Double sumOfSquaresB = 0;
+            double sumOfSquaresR = 0;
+            double sumOfSquaresG = 0;
+            double sumOfSquaresB = 0;
 
-            Double maxR = 0;
-            Double maxG = 0;
-            Double maxB = 0;
+            double maxR = 0;
+            double maxG = 0;
+            double maxB = 0;
 
             double psnr;
 
