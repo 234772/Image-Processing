@@ -596,18 +596,17 @@ namespace Processor
             Bitmap bmp1 = new Bitmap(firstImage);
             Bitmap bmp2 = new Bitmap(secondImage);
 
-            BitmapData bmpData1 = bmp1.LockBits(new Rectangle(0, 0, bmp1.Width, bmp1.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            BitmapData bmpData2 = bmp2.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            int height = bmp1.Height;
+            int width = bmp1.Width;
 
-            byte[] pixels1 = new byte[bmpData1.Height * bmpData1.Stride];
-            byte[] pixels2 = new byte[bmpData1.Height * bmpData1.Stride];
+            BitmapData bmpData1 = bmp1.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData bmpData2 = bmp2.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
-            Marshal.Copy(bmpData1.Scan0, pixels1, 0, bmpData1.Height * bmpData1.Stride);
-            Marshal.Copy(bmpData2.Scan0, pixels2, 0, bmpData2.Height * bmpData2.Stride);
+            byte[] pixels1 = new byte[height * bmpData1.Stride];
+            byte[] pixels2 = new byte[height * bmpData1.Stride];
 
-
-            int M = bmp1.Height;
-            int N = bmp1.Width;
+            Marshal.Copy(bmpData1.Scan0, pixels1, 0, height * bmpData1.Stride);
+            Marshal.Copy(bmpData2.Scan0, pixels2, 0, height * bmpData2.Stride);
 
             double sumOfSquaresR = 0;
             double sumOfSquaresG = 0;
@@ -628,10 +627,9 @@ namespace Processor
                 sumOfSquaresB += Math.Pow(pixel1B - pixel2B, 2);
             }
 
-            mse = (int)((sumOfSquaresR + sumOfSquaresG + sumOfSquaresB) / (3 * (M * N)));
+            mse = (int)((sumOfSquaresR + sumOfSquaresG + sumOfSquaresB) / (3 * height * width));
             return mse;
         }
-
         public static double PeakMeanSquareError(string firstImage, string secondImage)
         {
             Bitmap bmp1 = new Bitmap(firstImage);
@@ -673,6 +671,7 @@ namespace Processor
 
             return pmse;
         }
+
         public static int MaximumDifference(string firstImage, string secondImage)
         {
             Bitmap bmp1 = new Bitmap(firstImage);
