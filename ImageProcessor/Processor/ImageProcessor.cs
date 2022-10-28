@@ -56,9 +56,7 @@ namespace Processor
                 GeometricMeanFilter(bmp, o.secondPath, values[0], values[1]);
             }
             if (o.meanSquare)
-            {
                 Console.WriteLine(MeanSquareError(o.firstPath, o.secondPath));
-            }
             if (o.peakMeanSquare)
                 Console.WriteLine(PeakMeanSquareError(o.firstPath, o.secondPath));
             if (o.maximumDifference)
@@ -635,39 +633,49 @@ namespace Processor
             Bitmap bmp1 = new Bitmap(firstImage);
             Bitmap bmp2 = new Bitmap(secondImage);
 
-            double M = bmp1.Height;
-            double N = bmp1.Width;
+            int height = bmp1.Height;
+            int width = bmp1.Width;
+
+            BitmapData bmpData1 = bmp1.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData bmpData2 = bmp2.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            byte[] pixels1 = new byte[height * bmpData1.Stride];
+            byte[] pixels2 = new byte[height * bmpData1.Stride];
+
+            Marshal.Copy(bmpData1.Scan0, pixels1, 0, height * bmpData1.Stride);
+            Marshal.Copy(bmpData2.Scan0, pixels2, 0, height * bmpData2.Stride);
 
             double sumOfSquaresR = 0;
             double sumOfSquaresG = 0;
             double sumOfSquaresB = 0;
-
             double maxR = 0;
             double maxG = 0;
             double maxB = 0;
-
             double pmse;
 
-            for (int i = 0; i < M; i++)
+          for(int x = 0; x < height * bmpData1.Stride - 2; x+=3)
             {
-                for (int j = 0; j < N; j++)
-                {
-                    Color pixel1 = bmp1.GetPixel(j, i);
-                    Color pixel2 = bmp2.GetPixel(j, i);
 
-                    if(pixel1.R > maxR)
-                        maxR = pixel1.R;
-                    if(pixel1.G > maxG)
-                        maxG = pixel1.G;
-                    if(pixel1.B > maxB)
-                        maxB = pixel1.B;
+                    byte pixel1R = pixels1[x];
+                    byte pixel1G = pixels1[x + 1];
+                    byte pixel1B = pixels1[x + 2];
+                    byte pixel2R = pixels2[x];
+                    byte pixel2G = pixels2[x + 1];
+                    byte pixel2B = pixels2[x + 2];
 
-                    sumOfSquaresR += Math.Pow(pixel1.R - pixel2.R, 2);
-                    sumOfSquaresG += Math.Pow(pixel1.G - pixel2.G, 2);
-                    sumOfSquaresB += Math.Pow(pixel1.B - pixel2.B, 2);
-                }
+                    if (pixel1R > maxR)
+                        maxR = pixel1R;
+                    if(pixel1G > maxG)
+                        maxG = pixel1G;
+                    if(pixel1B > maxB)
+                        maxB = pixel1B;
+
+                    sumOfSquaresR += Math.Pow(pixel1R - pixel2R, 2);
+                    sumOfSquaresG += Math.Pow(pixel1G - pixel2G, 2);
+                    sumOfSquaresB += Math.Pow(pixel1B - pixel2B, 2);
             }
-            pmse = (sumOfSquaresR + sumOfSquaresG + sumOfSquaresB) / (3 * (M * N) * Math.Pow((maxR + maxG + maxB) / 3, 2));
+           
+            pmse = (sumOfSquaresR + sumOfSquaresG + sumOfSquaresB) / (3 * (height * width) * Math.Pow((maxR + maxG + maxB) / 3, 2));
 
             return pmse;
         }
