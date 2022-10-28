@@ -56,7 +56,9 @@ namespace Processor
                 GeometricMeanFilter(bmp, o.secondPath, values[0], values[1]);
             }
             if (o.meanSquare)
+            {
                 Console.WriteLine(MeanSquareError(o.firstPath, o.secondPath));
+            }
             if (o.peakMeanSquare)
                 Console.WriteLine(PeakMeanSquareError(o.firstPath, o.secondPath));
             if (o.maximumDifference)
@@ -515,8 +517,6 @@ namespace Processor
                         colorsB.RemoveAt(colorsB.Count - l - 1);
                     }
 
-
-
                     ///Calculate the mean value of the mask
                     meanR = colorsR.Sum(x => x.R) / colorsR.Count;
                     meanG = colorsG.Sum(x => x.G) / colorsG.Count;
@@ -590,10 +590,21 @@ namespace Processor
             }
             ih.saveImage(res, savePath);
         }
+
         public static int MeanSquareError(string firstImage, string secondImage)
         {
             Bitmap bmp1 = new Bitmap(firstImage);
             Bitmap bmp2 = new Bitmap(secondImage);
+
+            BitmapData bmpData1 = bmp1.LockBits(new Rectangle(0, 0, bmp1.Width, bmp1.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData bmpData2 = bmp2.LockBits(new Rectangle(0, 0, bmp2.Width, bmp2.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            byte[] pixels1 = new byte[bmpData1.Height * bmpData1.Stride];
+            byte[] pixels2 = new byte[bmpData1.Height * bmpData1.Stride];
+
+            Marshal.Copy(bmpData1.Scan0, pixels1, 0, bmpData1.Height * bmpData1.Stride);
+            Marshal.Copy(bmpData2.Scan0, pixels2, 0, bmpData2.Height * bmpData2.Stride);
+
 
             int M = bmp1.Height;
             int N = bmp1.Width;
@@ -602,22 +613,25 @@ namespace Processor
             double sumOfSquaresG = 0;
             double sumOfSquaresB = 0;
             int mse;
-           
-            for (int i = 0; i < M; i++)
+          
+            for (int x = 0; x < bmpData1.Height * bmpData1.Stride - 2; x += 3)
             {
-                for (int j = 0; j < N; j++)
-                {
-                    Color pixel1 = bmp1.GetPixel(j, i);
-                    Color pixel2 = bmp2.GetPixel(j, i);
+                byte pixel1R = pixels1[x];
+                byte pixel1G = pixels1[x + 1];
+                byte pixel1B = pixels1[x + 2];
+                byte pixel2R = pixels2[x];
+                byte pixel2G = pixels2[x + 1];
+                byte pixel2B = pixels2[x + 2];
 
-                    sumOfSquaresR += Math.Pow(pixel1.R - pixel2.R, 2);
-                    sumOfSquaresG += Math.Pow(pixel1.G - pixel2.G, 2);
-                    sumOfSquaresB += Math.Pow(pixel1.B - pixel2.B, 2);
-                }
+                sumOfSquaresR += Math.Pow(pixel1R - pixel2R, 2);
+                sumOfSquaresG += Math.Pow(pixel1G - pixel2G, 2);
+                sumOfSquaresB += Math.Pow(pixel1B - pixel2B, 2);
             }
+
             mse = (int)((sumOfSquaresR + sumOfSquaresG + sumOfSquaresB) / (3 * (M * N)));
             return mse;
         }
+
         public static double PeakMeanSquareError(string firstImage, string secondImage)
         {
             Bitmap bmp1 = new Bitmap(firstImage);
@@ -693,7 +707,7 @@ namespace Processor
 
             return (int)maxDiff;
         }
-        public static Double SignalToNoiseRatio(string firstImage, string secondImage)
+        public static double SignalToNoiseRatio(string firstImage, string secondImage)
         {
             Bitmap bmp1 = new Bitmap(firstImage);
             Bitmap bmp2 = new Bitmap(secondImage);
