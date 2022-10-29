@@ -399,8 +399,8 @@ namespace Processor
             // Copy the RGB values into the array.
             Marshal.Copy(ptr, rgbValues, 0, image.Height * bmpData.Stride);
 
+            //Put green, blue and red values into separate arrays.
             int k = 0;
-
             for (int i = 0; i < height; i++)
             {
                 for(int j = 0; j < width; j++)
@@ -412,6 +412,7 @@ namespace Processor
                 }
             }
 
+            //Calculate how many pixels with given intensity are there (sort of a histogram).
             for (int i = 0; i < height; i++)
             {
                 for (int j = 0; j < width; j++)
@@ -428,6 +429,7 @@ namespace Processor
                 probabilityG[i] /= (width * height);
                 probabilityB[i] /= (width * height);
             }
+
             int p = 0;
             for (int j = 0; j < height; j++)
             {
@@ -468,6 +470,7 @@ namespace Processor
         {
             Bitmap res = new Bitmap(image.Width + 2, image.Height + 2);
 
+            //Copy row zero of original image, to row zero of buffer image, last row to last row, etc.
             for(int i = 1; i <= image.Height; i++)
             {
                 for(int j = 1; j <= image.Width; j++)
@@ -484,6 +487,7 @@ namespace Processor
                     res.SetPixel(i, j, image.GetPixel(i - 1, j - 1));
                 }
             }
+            //Assign corner values by hand.
             res.SetPixel(0, 0, res.GetPixel(1, 0));
             res.SetPixel(res.Width - 1, 0, res.GetPixel(res.Width - 2, 0));
             res.SetPixel(0, res.Height - 1, res.GetPixel(0, res.Height - 2));
@@ -503,6 +507,8 @@ namespace Processor
             int m = maskM;
             int n = maskN;
 
+            //We want our mask dimensions to be odd, so we can avoid situations where we can't take
+            //equally as many pixels from around the center pxiel.
             if (m % 2 == 0) m++;
             if (n % 2 == 0) n++;
 
@@ -515,14 +521,12 @@ namespace Processor
             Bitmap res = new Bitmap(image.Width, image.Height);
             Bitmap buffer = ExtendBitmapByOne(image);
 
-            ///Run through every pixel of the original image(not buffer)
-            ///
-
+            //Run through every pixel of the original image(not buffer)
             for(int i = 1; i < buffer.Height - 1; i++)
             {
                 for(int j = 1; j < buffer.Width - 1; j++)
                 {
-                    ///Put a 3x3 mask on every pixel of the image(including buffer, as we need the borders)
+                    //Put a 3x3 mask on every pixel of the image(including borders of the buffer.)
                     int k = 0;
                     int meanR = 0;
                     int meanG = 0;
@@ -550,16 +554,17 @@ namespace Processor
                         }
                     }
 
-                    ///Order the mask, so we can trim the border values
+                    //Order the mask, so we can trim the border values
                     Array.Sort(maskR, (x, y) => x.R.CompareTo(y.R));
                     Array.Sort(maskG, (x, y) => x.G.CompareTo(y.G));
                     Array.Sort(maskB, (x, y) => x.B.CompareTo(y.B));
 
+                    //Put sorted arrays in lists.
                     List<Color> colorsR = new List<Color>(maskR);
                     List<Color> colorsG = new List<Color>(maskG);
                     List<Color> colorsB = new List<Color>(maskB);
 
-                    ///Remove alpha elements from both sides of the sorted arrayList
+                    //Remove alpha elements from both sides of the sorted arrayList
                     for (int l = 0; l < alpha; l++)
                     {
                         colorsR.RemoveAt(l);
@@ -572,12 +577,12 @@ namespace Processor
                         colorsB.RemoveAt(colorsB.Count - l - 1);
                     }
 
-                    ///Calculate the mean value of the mask
+                    //Calculate the mean value of the mask
                     meanR = colorsR.Sum(x => x.R) / colorsR.Count;
                     meanG = colorsG.Sum(x => x.G) / colorsG.Count;
                     meanB = colorsB.Sum(x => x.B) / colorsB.Count;
 
-                    ///Assign the mean value to the target pixel
+                    //Assign the mean value to the target pixel
                     res.SetPixel(j - 1, i - 1, Color.FromArgb(meanR, meanG, meanB));
                 }
             }
@@ -595,6 +600,8 @@ namespace Processor
             int maskM = m;
             int maskN = n;
 
+            //We want our mask dimensions to be odd, so we can avoid situations where we can't take
+            //equally as many pixels from around the center pxiel.
             if (m % 2 == 0) m++;
             if (n % 2 == 0) n++;
 
@@ -604,12 +611,12 @@ namespace Processor
             Bitmap res = new Bitmap(image.Width, image.Height);
             Bitmap buffer = ExtendBitmapByOne(image);
 
-            ///Run through every pixel of the original image(not buffer)
+            //Run through every pixel of the original image(not buffer)
             for (int i = 1; i < buffer.Height - 1; i++)
             {
                 for (int j = 1; j < buffer.Width - 1; j++)
                 {
-                    ///Put a 3x3 mask on every pixel of the image(including buffer, as we need the borders)
+                    //Put a 3x3 mask on every pixel of the image(including buffer, as we need the borders)
                     int k = 0;
 
                     Color[] maskR = new Color[m * n];
@@ -633,10 +640,12 @@ namespace Processor
                         }
                     }
 
+                    //Assign non-zero value to product of arrays.
                     double productR = maskR[0].R;
                     double productG = maskG[0].G;
                     double productB = maskB[0].B;
 
+                    //Multiply every element of every array. We start at x=1, because we've previously assigned the first value of the array to product.
                     for(int x = 1; x < maskR.Length; x++)
                     {
                         productR *= maskR[x].R;
@@ -646,7 +655,7 @@ namespace Processor
 
                     double divider = 1.0 / (m * n);
 
-                    ///Assign the geometric product value to the target pixel
+                    //Assign the geometric product value to the target pixel
                     res.SetPixel(j - 1, i - 1, Color.FromArgb((int)Math.Pow(productR, divider), (int)Math.Pow(productG, divider), (int)Math.Pow(productB, divider)));
                 }
             }
@@ -672,11 +681,13 @@ namespace Processor
             byte[] pixels1 = new byte[height * bmpData1.Stride];
             byte[] pixels2 = new byte[height * bmpData1.Stride];
 
+            //Copy bmpData1 and bmpData2 to pixels1 and pixels2 arrays respecitvely.
             Marshal.Copy(bmpData1.Scan0, pixels1, 0, height * bmpData1.Stride);
             Marshal.Copy(bmpData2.Scan0, pixels2, 0, height * bmpData2.Stride);
 
             int mse;
 
+            //As the red, green and blue values are independent of each other, we can calculate their sum of squares, at the same time.
             Task<double> taskR= Task<double>.Factory.StartNew(() =>
             {
                 double sumOfSquaresR = 0;
@@ -777,6 +788,7 @@ namespace Processor
             byte[] pixels1 = new byte[height * bmpData1.Stride];
             byte[] pixels2 = new byte[height * bmpData1.Stride];
 
+            //Copy bmpData1 and bmpData2 to pixels1 and pixels2 arrays respecitvely.
             Marshal.Copy(bmpData1.Scan0, pixels1, 0, height * bmpData1.Stride);
             Marshal.Copy(bmpData2.Scan0, pixels2, 0, height * bmpData2.Stride);
 
@@ -789,6 +801,7 @@ namespace Processor
 
             double pmse;
 
+            //Run through every value of pixels 1 and 2 arrays.
             for(int x = 0; x < height * bmpData1.Stride - 2; x += 3)
             {
 
@@ -799,6 +812,7 @@ namespace Processor
                 byte pixel2G = pixels2[x + 1];
                 byte pixel2B = pixels2[x + 2];
 
+                //Fin the overall max value for each of rgb channels.
                 if (pixel1R > maxR)
                     maxR = pixel1R;
                 if (pixel1G > maxG)
@@ -806,6 +820,7 @@ namespace Processor
                 if (pixel1B > maxB)
                     maxB = pixel1B;
 
+                //Calculate the sum of squares of respective rgb values from two images.
                 sumOfSquaresR += Math.Pow(pixel1R - pixel2R, 2);
                 sumOfSquaresG += Math.Pow(pixel1G - pixel2G, 2);
                 sumOfSquaresB += Math.Pow(pixel1B - pixel2B, 2);
@@ -834,11 +849,13 @@ namespace Processor
             byte[] pixels1 = new byte[height * bmpData1.Stride];
             byte[] pixels2 = new byte[height * bmpData1.Stride];
 
+            //Copy bmpData1 and bmpData2 to pixels1 and pixels2 arrays respecitvely.
             Marshal.Copy(bmpData1.Scan0, pixels1, 0, height * bmpData1.Stride);
             Marshal.Copy(bmpData2.Scan0, pixels2, 0, height * bmpData2.Stride);
 
             double maxDiff = 0;
 
+            //Run through every pixel of pixels1 and pixels2 arrays.
             for (int x = 0; x < height * bmpData1.Stride - 2; x += 3)
             {
 
@@ -849,12 +866,15 @@ namespace Processor
                 byte pixel2G = pixels2[x + 1];
                 byte pixel2B = pixels2[x + 2];
 
+                //Calculate the difference between two respective rgb values in two images.
                 int redDiff = Math.Abs(pixel1R - pixel2R);
                 int greenDiff = Math.Abs(pixel1G - pixel2G);
                 int blueDiff = Math.Abs(pixel1B - pixel2B);
 
+                //Calculate the mean value of rgb differences.
                 double sumDiff = (redDiff + greenDiff + blueDiff) / 3;
 
+                //Find the overall biggest difference.
                 if (sumDiff > maxDiff)
                     maxDiff = sumDiff;
             }
@@ -880,6 +900,7 @@ namespace Processor
             byte[] pixels1 = new byte[height * bmpData1.Stride];
             byte[] pixels2 = new byte[height * bmpData1.Stride];
 
+            //Copy bmpData1 and bmpData2 to pixels1 and pixels2 arrays respecitvely.
             Marshal.Copy(bmpData1.Scan0, pixels1, 0, height * bmpData1.Stride);
             Marshal.Copy(bmpData2.Scan0, pixels2, 0, height * bmpData2.Stride);
 
@@ -893,6 +914,7 @@ namespace Processor
 
             double snr;
 
+            //Run through every value of pixels1 and pixels2 arrays.
             for (int x = 0; x < height * bmpData1.Stride - 2; x += 3)
             {
                 byte pixel1R = pixels1[x];
@@ -902,10 +924,12 @@ namespace Processor
                 byte pixel2G = pixels2[x + 1];
                 byte pixel2B = pixels2[x + 2];
 
+                //Calculate sum of squares of differences of respective pixels in two images.
                 sumOfSquaresR += Math.Pow(pixel1R - pixel2R, 2);
                 sumOfSquaresG += Math.Pow(pixel1G - pixel2G, 2);
                 sumOfSquaresB += Math.Pow(pixel1B - pixel2B, 2);
 
+                //Calculate the sum of squares of rgb values in the first image.
                 sumOfSquarePixelR += Math.Pow(pixel1R, 2);
                 sumOfSquarePixelG += Math.Pow(pixel1G, 2);
                 sumOfSquarePixelB += Math.Pow(pixel1B, 2);
