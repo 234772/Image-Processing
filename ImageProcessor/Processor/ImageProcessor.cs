@@ -12,7 +12,10 @@ namespace Processor
     {
         private static ImageHandler ih = new ImageHandler();
         public static ImageHandler Ih { get { return ih; } }
-
+        /// <summary>
+        /// Method that processes the arguments passed by the user through command line, and makes calls to proper functions, based un user's input.
+        /// </summary>
+        /// <param name="o"></param>
         public static void Process(CommandLineOptions o)
         {
             Bitmap bmp;
@@ -32,6 +35,8 @@ namespace Processor
                 NegativeImage(bmp, o.secondPath);
             if (o.Dimensions.Count() > 0)
             {
+                //Some function calls take multiple parameters from the user,
+                //so we put them into IEnumerable and separate them here.
                 List<int> dimensions = new List<int>(o.Dimensions);
                 BilinearResizing(bmp, o.secondPath, dimensions[0], dimensions[1]);
             }
@@ -52,10 +57,7 @@ namespace Processor
                 GeometricMeanFilter(bmp, o.secondPath, values[0], values[1]);
             }
             if (o.meanSquare)
-            {
-                //Console.WriteLine(MeanSquareError(o.firstPath, o.secondPath));
                 Console.WriteLine(MeanSquareErrorAsync(o.firstPath, o.secondPath));
-            }
             if (o.peakMeanSquare)
                 Console.WriteLine(PeakMeanSquareError(o.firstPath, o.secondPath));
             if (o.maximumDifference)
@@ -65,6 +67,13 @@ namespace Processor
             if (o.peakSignalToNoiseRatio)
                 Console.WriteLine(PeakSignalToNoiseRatio(o.firstPath, o.secondPath));
         }
+        /// <summary>
+        /// Method used solely as a helper method in ChangeBrightnessMethod().
+        /// It assures that the pixel values after changing the brightness don't go below zero, or above 255.
+        /// </summary>
+        /// <param name="pixelValue1"></param>
+        /// <param name="changeValue"></param>
+        /// <returns>Byte value between 0 and 255.</returns>
         private static byte Truncate(byte pixelValue1, int changeValue)
         {
             int p1 = pixelValue1;
@@ -76,7 +85,12 @@ namespace Processor
             else
                 return (byte)(p1 + p2);
         }
- 
+        /// <summary>
+        /// Method used to increase or decrease brightness of an image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="changeValue"></param>
         public static void ChangeBrightness(Bitmap image, string savePath, int changeValue)
         {
             Bitmap bmp = new Bitmap(image);
@@ -100,6 +114,11 @@ namespace Processor
 
             ih.saveImage(bmp, savePath);
         }
+        /// <summary>
+        /// Method that produces version of an image, with negative of the original color values.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
         public static void NegativeImage(Bitmap image, string savePath)
         {
             Bitmap bmp = new Bitmap(image);
@@ -123,6 +142,13 @@ namespace Processor
 
             ih.saveImage(bmp, savePath);
         }
+        /// <summary>
+        /// Resizes the image to dimensions given by the user.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="nWidth"></param>
+        /// <param name="nHeight"></param>
         public static void BilinearResizing(Bitmap image, string savePath, int nWidth, int nHeight)
         {
             var b = new Bitmap(nWidth, nHeight);
@@ -192,6 +218,11 @@ namespace Processor
 
             ih.saveImage(b, savePath);
         }
+        /// <summary>
+        /// Flips the image horizontally.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
         public static void HorizontalFlip(Bitmap image, string savePath)
         {
             BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
@@ -238,6 +269,11 @@ namespace Processor
 
             ih.saveImage(image, savePath);
         }
+        /// <summary>
+        /// Flips the image vertically.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
         public static void VerticalFlip(Bitmap image, string savePath)
         {
 
@@ -284,6 +320,11 @@ namespace Processor
 
             ih.saveImage(image, savePath);
         }
+        /// <summary>
+        /// Flips the image diagonally.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
         public static void DiagonalFlip(Bitmap image, string savePath)
         {
             BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
@@ -329,6 +370,11 @@ namespace Processor
 
             ih.saveImage(image, savePath);
         }
+        /// <summary>
+        /// Changes the contrast of an image to a higher value. Uses histogram equalization.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
         public static void ChangeContrast(Bitmap image, string savePath)
         {
             int width = image.Width;
@@ -413,6 +459,11 @@ namespace Processor
 
             ih.saveImage(image, savePath);
         }
+        /// <summary>
+        /// Extends the given bitmap by one pixel on its edges.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns>New bitmap with dimension increased by 2</returns>
         public static Bitmap ExtendBitmapByOne(Bitmap image)
         {
             Bitmap res = new Bitmap(image.Width + 2, image.Height + 2);
@@ -439,6 +490,14 @@ namespace Processor
             res.SetPixel(res.Width - 1, res.Height - 1, res.GetPixel(res.Height - 2, res.Width - 1));
             return res;
         }
+        /// <summary>
+        /// Applies alpha-trimmed mean filter on an image to denoise it.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="alpha"></param>
+        /// <param name="maskM"></param>
+        /// <param name="maskN"></param>
         public static void AlphaTrimmedFilter(Bitmap image, string savePath, int alpha, int maskM, int maskN)
         {
             int m = maskM;
@@ -524,6 +583,13 @@ namespace Processor
             }
             ih.saveImage(res, savePath);
         }
+        /// <summary>
+        /// Applies geometric mean filter on an image to denoise it.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="m"></param>
+        /// <param name="n"></param>
         public static void GeometricMeanFilter(Bitmap image, string savePath, int m, int n)
         {
             int maskM = m;
@@ -586,7 +652,12 @@ namespace Processor
             }
             ih.saveImage(res, savePath);
         }
-
+        /// <summary>
+        /// Calculates the mean square error between every pixel of two given images.
+        /// </summary>
+        /// <param name="firstImage"></param>
+        /// <param name="secondImage"></param>
+        /// <returns>An int that indicates the level of similarity between images.</returns>
         public static int MeanSquareErrorAsync(string firstImage, string secondImage)
         {
             Bitmap bmp1 = new Bitmap(firstImage);
@@ -686,6 +757,12 @@ namespace Processor
             mse = (int)((sumOfSquaresR + sumOfSquaresG + sumOfSquaresB) / (3 * height * width));
             return mse;
         }
+        /// <summary>
+        /// Calculates the peak mean square error between every pixel of two given images.
+        /// </summary>
+        /// <param name="firstImage"></param>
+        /// <param name="secondImage"></param>
+        /// <returns>An int that indicates the level of similarity between images.</returns>
         public static double PeakMeanSquareError(string firstImage, string secondImage)
         {
             Bitmap bmp1 = new Bitmap(firstImage);
@@ -738,7 +815,12 @@ namespace Processor
 
             return pmse;
         }
-
+        /// <summary>
+        /// Calculates the maximum difference between two given images.
+        /// </summary>
+        /// <param name="firstImage"></param>
+        /// <param name="secondImage"></param>
+        /// <returns>An int that indicates the level of similarity between images.</returns>
         public static int MaximumDifference(string firstImage, string secondImage)
         {
             Bitmap bmp1 = new Bitmap(firstImage);
@@ -779,7 +861,12 @@ namespace Processor
 
             return (int)maxDiff;
         }
-
+        /// <summary>
+        /// Calculates signal to noise ratio between two images.
+        /// </summary>
+        /// <param name="firstImage"></param>
+        /// <param name="secondImage"></param>
+        /// <returns>An int that indicates the level of similarity between images.</returns>
         public static double SignalToNoiseRatio(string firstImage, string secondImage)
         {
             Bitmap bmp1 = new Bitmap(firstImage);
@@ -827,7 +914,12 @@ namespace Processor
 
             return snr;
         }
-      
+        /// <summary>
+        /// Calculates peak signal to noise ratio between two images.
+        /// </summary>
+        /// <param name="firstImage"></param>
+        /// <param name="secondImage"></param>
+        /// <returns>An int that indicates the level of similarity between images.</returns>
         public static double PeakSignalToNoiseRatio(string firstImage, string secondImage)
         {
             return 20 * Math.Log10(255 + 255 + 255) - 10 * Math.Log10(MeanSquareError(firstImage, secondImage));
