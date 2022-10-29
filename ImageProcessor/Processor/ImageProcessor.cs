@@ -830,57 +830,6 @@ namespace Processor
       
         public static double PeakSignalToNoiseRatio(string firstImage, string secondImage)
         {
-            Bitmap bmp1 = new Bitmap(firstImage);
-            Bitmap bmp2 = new Bitmap(secondImage);
-            int height = bmp1.Height;
-            int width = bmp1.Width;
-
-            BitmapData bmpData1 = bmp1.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            BitmapData bmpData2 = bmp2.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-
-            byte[] pixels1 = new byte[height * bmpData1.Stride];
-            byte[] pixels2 = new byte[height * bmpData1.Stride];
-
-            Marshal.Copy(bmpData1.Scan0, pixels1, 0, height * bmpData1.Stride);
-            Marshal.Copy(bmpData2.Scan0, pixels2, 0, height * bmpData2.Stride);
-
-            double sumOfSquaresR = 0;
-            double sumOfSquaresG = 0;
-            double sumOfSquaresB = 0;
-
-            double maxR = 0;
-            double maxG = 0;
-            double maxB = 0;
-
-            double psnr;
-
-            for (int x = 0; x < height * bmpData1.Stride - 2; x += 3)
-            {
-                byte pixel1R = pixels1[x];
-                byte pixel1G = pixels1[x + 1];
-                byte pixel1B = pixels1[x + 2];
-                byte pixel2R = pixels2[x];
-                byte pixel2G = pixels2[x + 1];
-                byte pixel2B = pixels2[x + 2];
-
-                sumOfSquaresR += Math.Pow(pixel1R - pixel2R, 2);
-                sumOfSquaresG += Math.Pow(pixel1G - pixel2G, 2);
-                sumOfSquaresB += Math.Pow(pixel1B - pixel2B, 2);
-
-                if (pixel1R > maxR)
-                    maxR = pixel1R;
-                if (pixel1G > maxG)
-                    maxG = pixel1G;
-                if (pixel1B > maxB)
-                    maxB = pixel1B;
-            }
-
-            maxR = Math.Pow(maxR, 2);
-            maxG = Math.Pow(maxG, 2);
-            maxB = Math.Pow(maxB, 2);
-
-            psnr = 10 * Math.Log10((maxR + maxG + maxB) / (sumOfSquaresR + sumOfSquaresG + sumOfSquaresB));
-
             return 20 * Math.Log10(255 + 255 + 255) - 10 * Math.Log10(MeanSquareError(firstImage, secondImage));
         }
     }
