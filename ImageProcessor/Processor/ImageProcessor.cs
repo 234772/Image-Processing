@@ -183,6 +183,18 @@ namespace Processor
                     byte c4G = originalRGB[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 1];
                     byte c4R = originalRGB[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 2];
 
+
+                    //c4 = image.GetPixel(ceil_x, ceil_y);
+                    byte c4B = rgbValues[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel];
+                    byte c4G = rgbValues[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 1];
+                    byte c4R = rgbValues[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 2];
+                   
+
+                    //c4 = image.GetPixel(ceil_x, ceil_y);
+                    byte c4B = rgbValues[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel];
+                    byte c4G = rgbValues[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 1];
+                    byte c4R = rgbValues[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 2];
+                   
                     // Blue
                     b1 = (byte)(one_minus_x * c1B + fraction_x * c2B);
                     b2 = (byte)(one_minus_x * c3B + fraction_x * c4B);
