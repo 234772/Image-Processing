@@ -142,8 +142,6 @@ namespace Processor
             byte[] resultRGB = new byte[resultBitmapData.Stride * nHeight];
             Marshal.Copy(bmpData.Scan0, originalRGB, 0, bmpData.Height * bmpData.Stride);
 
-            Console.WriteLine(resultBitmapData.Stride);
-
             for (int x = 0; x < nWidth; ++x)
             {
                 for (int y = 0; y < nHeight; ++y)
@@ -186,19 +184,16 @@ namespace Processor
                     // Blue
                     b1 = (byte)(one_minus_x * c1B + fraction_x * c2B);
                     b2 = (byte)(one_minus_x * c3B + fraction_x * c4B);
-
                     blue = (byte)(one_minus_y * (double)(b1) + fraction_y * (double)(b2));
 
                     // Green
                     b1 = (byte)(one_minus_x * c1G + fraction_x * c2G);
                     b2 = (byte)(one_minus_x * c3G + fraction_x * c4G);
-
                     green = (byte)(one_minus_y * (double)(b1) + fraction_y * (double)(b2));
 
                     // Red
                     b1 = (byte)(one_minus_x * c1R + fraction_x * c2R);
                     b2 = (byte)(one_minus_x * c3R + fraction_x * c4R);
-
                     red = (byte)(one_minus_y * (double)(b1) + fraction_y * (double)(b2));
 
                     resultRGB[y * resultBitmapData.Stride + x * bytesPerPixel] = blue;
