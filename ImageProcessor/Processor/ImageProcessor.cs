@@ -33,6 +33,7 @@ namespace Processor
             if (o.Dimensions.Count() > 0)
             {
                 List<int> dimensions = new List<int>(o.Dimensions);
+                //BilinearResizing1(bmp, o.secondPath, dimensions[0], dimensions[1]);
                 BilinearResizing(bmp, o.secondPath, dimensions[0], dimensions[1]);
             }
             if (o.hflip)
@@ -126,10 +127,113 @@ namespace Processor
         public static void BilinearResizing(Bitmap image, string savePath, int nWidth, int nHeight)
         {
             var b = new Bitmap(nWidth, nHeight);
-
             double nXFactor = (double)image.Width / (double)nWidth;
             double nYFactor = (double)image.Height / (double)nHeight;
 
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            int bytes = bmpData.Stride * bmpData.Height;
+            byte[] rgbValues = new byte[bytes];
+            byte[] result = new byte[bytes];
+            Marshal.Copy(bmpData.Scan0, rgbValues, 0, bmpData.Height * bmpData.Stride);
+            double fraction_x, fraction_y, one_minus_x, one_minus_y;
+            int ceil_x, ceil_y, floor_x, floor_y;
+
+
+            byte red, green, blue;
+
+            byte b1, b2;
+            int offset = 0;
+            int bytesPerPixel = 3;
+           
+            Console.WriteLine(image.Width + " " + bmpData.Stride);
+            for (int x = 0; x < b.Width; ++x)
+            {
+
+                for (int y = 0; y < b.Height; ++y)
+                {
+                    floor_x = (int)Math.Floor(x * nXFactor);
+                    floor_y = (int)Math.Floor(y * nYFactor);
+
+                    ceil_x = floor_x + 1;
+
+                    if (ceil_x >= image.Width - 10)
+                        ceil_x = floor_x;
+
+                    ceil_y = floor_y + 1;
+
+                    if (ceil_y >= image.Height - 10)
+                        ceil_y = floor_y;
+
+                    fraction_x = x * nXFactor - floor_x;
+                    fraction_y = y * nYFactor - floor_y;
+
+                    one_minus_x = 1.0 - fraction_x;
+                    one_minus_y = 1.0 - fraction_y;
+
+                    //c1 = image.GetPixel(floor_x, floor_y);
+                    byte c1B = rgbValues[floor_y * bmpData.Stride + floor_x * bytesPerPixel];
+                    byte c1G = rgbValues[floor_y * bmpData.Stride + floor_x * bytesPerPixel + 1];
+                    byte c1R = rgbValues[floor_y * bmpData.Stride + floor_x * bytesPerPixel + 2];
+
+                    //byte c1B = imageCopy.GetPixel(floor_x, floor_y).B;
+                    //byte c1G = imageCopy.GetPixel(floor_x, floor_y).G;
+                    //byte c1R = imageCopy.GetPixel(floor_x, floor_y).R;
+
+                    //c2 = image.GetPixel(ceil_x, floor_y);
+                    byte c2B = rgbValues[floor_y * bmpData.Stride + ceil_x * bytesPerPixel];
+                    byte c2G = rgbValues[floor_y * bmpData.Stride + ceil_x * bytesPerPixel + 1];
+                    byte c2R = rgbValues[floor_y * bmpData.Stride + ceil_x * bytesPerPixel + 2];
+
+                    //c3 = image.GetPixel(floor_x, ceil_y);
+                    byte c3B = rgbValues[ceil_y * bmpData.Stride + floor_x * bytesPerPixel];
+                    byte c3G = rgbValues[ceil_y * bmpData.Stride + floor_x * bytesPerPixel + 1];
+                    byte c3R = rgbValues[ceil_y * bmpData.Stride + floor_x * bytesPerPixel + 2];
+
+                    //c4 = image.GetPixel(ceil_x, ceil_y);
+                    byte c4B = rgbValues[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel];
+                    byte c4G = rgbValues[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 1];
+                    byte c4R = rgbValues[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 2];
+                   
+                    // Blue
+                    b1 = (byte)(one_minus_x * c1B + fraction_x * c2B);
+                    b2 = (byte)(one_minus_x * c3B + fraction_x * c4B);
+
+                    blue = (byte)(one_minus_y * (double)(b1) + fraction_y * (double)(b2));
+
+                    // Green
+                    b1 = (byte)(one_minus_x * c1G + fraction_x * c2G);
+                    b2 = (byte)(one_minus_x * c3G + fraction_x * c4G);
+
+                    green = (byte)(one_minus_y * (double)(b1) + fraction_y * (double)(b2));
+
+                    // Red
+                    b1 = (byte)(one_minus_x * c1R + fraction_x * c2R);
+                    b2 = (byte)(one_minus_x * c3R + fraction_x * c4R);
+
+                    red = (byte)(one_minus_y * (double)(b1) + fraction_y * (double)(b2));
+
+                    result[y * bmpData.Stride + x * 3] = blue;
+                    result[y * bmpData.Stride + x * 3 + 1] = green;
+                    result[y * bmpData.Stride + x * 3 + 2] = red;
+                    b.SetPixel(x, y, Color.FromArgb(255, red, green, blue));
+                    
+                }
+                offset += 2;
+            }
+            Bitmap c = new Bitmap(nWidth, nHeight);
+            BitmapData res = c.LockBits(new Rectangle(0, 0, c.Width, c.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb); ;
+            //Marshal.Copy(newBmp, 0, ptr, bmpData.Stride * bmpData.Width);
+            Marshal.Copy(result, 0, res.Scan0,nWidth * nHeight);
+            c.UnlockBits(res);
+            ih.saveImage(b, savePath);
+        }
+        public static void BilinearResizing1(Bitmap image, string savePath, int nWidth, int nHeight)
+        {
+            var b = new Bitmap(nWidth, nHeight);
+
+            double nXFactor = (double)image.Width / (double)nWidth;
+            double nYFactor = (double)image.Height / (double)nHeight;
+           
             double fraction_x, fraction_y, one_minus_x, one_minus_y;
             int ceil_x, ceil_y, floor_x, floor_y;
 
@@ -141,7 +245,6 @@ namespace Processor
             byte red, green, blue;
 
             byte b1, b2;
-
             for (int x = 0; x < b.Width; ++x)
                 for (int y = 0; y < b.Height; ++y)
                 {
@@ -169,12 +272,18 @@ namespace Processor
                     c3 = image.GetPixel(floor_x, ceil_y);
                     c4 = image.GetPixel(ceil_x, ceil_y);
 
+                    //iteration++;
+                    //if(iteration == 10)
+                    //{
+                    //Console.WriteLine(c1);
+                    //return;
+                    //}
+
                     // Blue
                     b1 = (byte)(one_minus_x * c1.B + fraction_x * c2.B);
                     b2 = (byte)(one_minus_x * c3.B + fraction_x * c4.B);
 
                     blue = (byte)(one_minus_y * (double)(b1) + fraction_y * (double)(b2));
-
                     // Green
                     b1 = (byte)(one_minus_x * c1.G + fraction_x * c2.G);
                     b2 = (byte)(one_minus_x * c3.G + fraction_x * c4.G);
@@ -187,9 +296,10 @@ namespace Processor
 
                     red = (byte)(one_minus_y * (double)(b1) + fraction_y * (double)(b2));
 
+                 
                     b.SetPixel(x, y, Color.FromArgb(255, red, green, blue));
                 }
-
+            Console.WriteLine();
             ih.saveImage(b, savePath);
         }
         public static void HorizontalFlip(Bitmap image, string savePath)
@@ -740,7 +850,7 @@ namespace Processor
         }
 
         public static int MaximumDifference(string firstImage, string secondImage)
-        {
+        { 
             Bitmap bmp1 = new Bitmap(firstImage);
             Bitmap bmp2 = new Bitmap(secondImage);
             int height = bmp1.Height;
@@ -827,9 +937,10 @@ namespace Processor
 
             return snr;
         }
-      
+
         public static double PeakSignalToNoiseRatio(string firstImage, string secondImage)
         {
+     
             return 20 * Math.Log10(255 + 255 + 255) - 10 * Math.Log10(MeanSquareError(firstImage, secondImage));
         }
     }
