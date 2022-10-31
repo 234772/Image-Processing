@@ -33,7 +33,6 @@ namespace Processor
             if (o.Dimensions.Count() > 0)
             {
                 List<int> dimensions = new List<int>(o.Dimensions);
-                //BilinearResizing1(bmp, o.secondPath, dimensions[0], dimensions[1]);
                 BilinearResizing(bmp, o.secondPath, dimensions[0], dimensions[1]);
             }
             if (o.hflip)
@@ -70,14 +69,14 @@ namespace Processor
         {
             int p1 = pixelValue1;
             int p2 = changeValue;
-            if(p1 + p2 > 255)
+            if (p1 + p2 > 255)
                 return 255;
             else if (p1 + p2 < 0)
                 return 0;
             else
                 return (byte)(p1 + p2);
         }
- 
+
         public static void ChangeBrightness(Bitmap image, string savePath, int changeValue)
         {
             Bitmap bmp = new Bitmap(image);
@@ -91,7 +90,7 @@ namespace Processor
             // Copy the RGB values into the array.
             Marshal.Copy(ptr, rgbValues, 0, bytes);
 
-            for(int i = 0; i < bytes; i++)
+            for (int i = 0; i < bytes; i++)
             {
                 rgbValues[i] = Truncate(rgbValues[i], changeValue);
             }
@@ -126,30 +125,26 @@ namespace Processor
         }
         public static void BilinearResizing(Bitmap image, string savePath, int nWidth, int nHeight)
         {
-            var b = new Bitmap(nWidth, nHeight);
             double nXFactor = (double)image.Width / (double)nWidth;
             double nYFactor = (double)image.Height / (double)nHeight;
-
-            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            int bytes = bmpData.Stride * bmpData.Height;
-            byte[] rgbValues = new byte[bytes];
-            byte[] result = new byte[bytes];
-            Marshal.Copy(bmpData.Scan0, rgbValues, 0, bmpData.Height * bmpData.Stride);
             double fraction_x, fraction_y, one_minus_x, one_minus_y;
             int ceil_x, ceil_y, floor_x, floor_y;
-
-
             byte red, green, blue;
-
             byte b1, b2;
-            int offset = 0;
             int bytesPerPixel = 3;
-           
-            Console.WriteLine(image.Width + " " + bmpData.Stride);
-            for (int x = 0; x < b.Width; ++x)
-            {
 
-                for (int y = 0; y < b.Height; ++y)
+            Bitmap resultBitmap = new Bitmap(nWidth, nHeight);
+            BitmapData resultBitmapData = resultBitmap.LockBits(new Rectangle(0, 0, resultBitmap.Width, resultBitmap.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb); ;
+
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            int allBytes = bmpData.Stride * bmpData.Height;
+            byte[] originalRGB = new byte[allBytes];
+            byte[] resultRGB = new byte[allBytes];
+            Marshal.Copy(bmpData.Scan0, originalRGB, 0, bmpData.Height * bmpData.Stride);
+
+            for (int x = 0; x < nWidth; ++x)
+            {
+                for (int y = 0; y < nHeight; ++y)
                 {
                     floor_x = (int)Math.Floor(x * nXFactor);
                     floor_y = (int)Math.Floor(y * nYFactor);
@@ -170,30 +165,22 @@ namespace Processor
                     one_minus_x = 1.0 - fraction_x;
                     one_minus_y = 1.0 - fraction_y;
 
-                    //c1 = image.GetPixel(floor_x, floor_y);
-                    byte c1B = rgbValues[floor_y * bmpData.Stride + floor_x * bytesPerPixel];
-                    byte c1G = rgbValues[floor_y * bmpData.Stride + floor_x * bytesPerPixel + 1];
-                    byte c1R = rgbValues[floor_y * bmpData.Stride + floor_x * bytesPerPixel + 2];
+                    byte c1B = originalRGB[floor_y * bmpData.Stride + floor_x * bytesPerPixel];
+                    byte c1G = originalRGB[floor_y * bmpData.Stride + floor_x * bytesPerPixel + 1];
+                    byte c1R = originalRGB[floor_y * bmpData.Stride + floor_x * bytesPerPixel + 2];
 
-                    //byte c1B = imageCopy.GetPixel(floor_x, floor_y).B;
-                    //byte c1G = imageCopy.GetPixel(floor_x, floor_y).G;
-                    //byte c1R = imageCopy.GetPixel(floor_x, floor_y).R;
+                    byte c2B = originalRGB[floor_y * bmpData.Stride + ceil_x * bytesPerPixel];
+                    byte c2G = originalRGB[floor_y * bmpData.Stride + ceil_x * bytesPerPixel + 1];
+                    byte c2R = originalRGB[floor_y * bmpData.Stride + ceil_x * bytesPerPixel + 2];
 
-                    //c2 = image.GetPixel(ceil_x, floor_y);
-                    byte c2B = rgbValues[floor_y * bmpData.Stride + ceil_x * bytesPerPixel];
-                    byte c2G = rgbValues[floor_y * bmpData.Stride + ceil_x * bytesPerPixel + 1];
-                    byte c2R = rgbValues[floor_y * bmpData.Stride + ceil_x * bytesPerPixel + 2];
+                    byte c3B = originalRGB[ceil_y * bmpData.Stride + floor_x * bytesPerPixel];
+                    byte c3G = originalRGB[ceil_y * bmpData.Stride + floor_x * bytesPerPixel + 1];
+                    byte c3R = originalRGB[ceil_y * bmpData.Stride + floor_x * bytesPerPixel + 2];
 
-                    //c3 = image.GetPixel(floor_x, ceil_y);
-                    byte c3B = rgbValues[ceil_y * bmpData.Stride + floor_x * bytesPerPixel];
-                    byte c3G = rgbValues[ceil_y * bmpData.Stride + floor_x * bytesPerPixel + 1];
-                    byte c3R = rgbValues[ceil_y * bmpData.Stride + floor_x * bytesPerPixel + 2];
+                    byte c4B = originalRGB[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel];
+                    byte c4G = originalRGB[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 1];
+                    byte c4R = originalRGB[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 2];
 
-                    //c4 = image.GetPixel(ceil_x, ceil_y);
-                    byte c4B = rgbValues[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel];
-                    byte c4G = rgbValues[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 1];
-                    byte c4R = rgbValues[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 2];
-                   
                     // Blue
                     b1 = (byte)(one_minus_x * c1B + fraction_x * c2B);
                     b2 = (byte)(one_minus_x * c3B + fraction_x * c4B);
@@ -212,20 +199,14 @@ namespace Processor
 
                     red = (byte)(one_minus_y * (double)(b1) + fraction_y * (double)(b2));
 
-                    result[y * bmpData.Stride + x * 3] = blue;
-                    result[y * bmpData.Stride + x * 3 + 1] = green;
-                    result[y * bmpData.Stride + x * 3 + 2] = red;
-                    b.SetPixel(x, y, Color.FromArgb(255, red, green, blue));
-                    
+                    resultRGB[y * resultBitmapData.Stride + x * bytesPerPixel] = blue;
+                    resultRGB[y * resultBitmapData.Stride + x * bytesPerPixel + 1] = green;
+                    resultRGB[y * resultBitmapData.Stride + x * bytesPerPixel + 2] = red;
                 }
-                offset += 2;
             }
-            Bitmap c = new Bitmap(nWidth, nHeight);
-            BitmapData res = c.LockBits(new Rectangle(0, 0, c.Width, c.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb); ;
-            //Marshal.Copy(newBmp, 0, ptr, bmpData.Stride * bmpData.Width);
-            Marshal.Copy(result, 0, res.Scan0,nWidth * nHeight);
-            c.UnlockBits(res);
-            ih.saveImage(b, savePath);
+            Marshal.Copy(resultRGB, 0, resultBitmapData.Scan0, nWidth * nHeight);
+            resultBitmap.UnlockBits(resultBitmapData);
+            ih.saveImage(resultBitmap, savePath);
         }
         public static void BilinearResizing1(Bitmap image, string savePath, int nWidth, int nHeight)
         {
@@ -233,7 +214,7 @@ namespace Processor
 
             double nXFactor = (double)image.Width / (double)nWidth;
             double nYFactor = (double)image.Height / (double)nHeight;
-           
+
             double fraction_x, fraction_y, one_minus_x, one_minus_y;
             int ceil_x, ceil_y, floor_x, floor_y;
 
@@ -296,7 +277,7 @@ namespace Processor
 
                     red = (byte)(one_minus_y * (double)(b1) + fraction_y * (double)(b2));
 
-                 
+
                     b.SetPixel(x, y, Color.FromArgb(255, red, green, blue));
                 }
             Console.WriteLine();
@@ -331,9 +312,9 @@ namespace Processor
             int val;
             int p = 0;
 
-            for(int y = 0; y < bmpData.Height; y++)
+            for (int y = 0; y < bmpData.Height; y++)
             {
-                for(int x = 0; x < bmpData.Stride; x += 3)
+                for (int x = 0; x < bmpData.Stride; x += 3)
                 {
                     val = bmpData.Stride + y * bmpData.Stride - x - 1;
                     newBmp[val] = bytesR[p];
@@ -367,7 +348,7 @@ namespace Processor
 
             int k = 0;
 
-            for(int i = 0; i < image.Width * image.Height; i++)
+            for (int i = 0; i < image.Width * image.Height; i++)
             {
                 bytesB[i] = rgbValues[k];
                 bytesG[i] = rgbValues[k + 1];
@@ -378,9 +359,9 @@ namespace Processor
             int val;
             int p = 0;
 
-            for(int i = 0; i < image.Height; i++)
+            for (int i = 0; i < image.Height; i++)
             {
-                for(int z = 0; z < bmpData.Stride; z += 3)
+                for (int z = 0; z < bmpData.Stride; z += 3)
                 {
                     val = ((image.Height - i) * bmpData.Stride) - bmpData.Stride + z;
                     newBmp[val] = bytesB[p];
@@ -467,7 +448,7 @@ namespace Processor
 
             for (int i = 0; i < height; i++)
             {
-                for(int j = 0; j < width; j++)
+                for (int j = 0; j < width; j++)
                 {
                     b[j, i] = rgbValues[k];
                     g[j, i] = rgbValues[k + 1];
@@ -486,7 +467,7 @@ namespace Processor
                 }
             }
 
-            for(int i = 0; i < 256; i++)
+            for (int i = 0; i < 256; i++)
             {
                 probabilityR[i] /= (width * height);
                 probabilityG[i] /= (width * height);
@@ -527,9 +508,9 @@ namespace Processor
         {
             Bitmap res = new Bitmap(image.Width + 2, image.Height + 2);
 
-            for(int i = 1; i <= image.Height; i++)
+            for (int i = 1; i <= image.Height; i++)
             {
-                for(int j = 1; j <= image.Width; j++)
+                for (int j = 1; j <= image.Width; j++)
                 {
                     if (i == 1)
                         res.SetPixel(j, i - 1, image.GetPixel(j - 1, i - 1));
@@ -569,9 +550,9 @@ namespace Processor
             ///Run through every pixel of the original image(not buffer)
             ///
 
-            for(int i = 1; i < buffer.Height - 1; i++)
+            for (int i = 1; i < buffer.Height - 1; i++)
             {
-                for(int j = 1; j < buffer.Width - 1; j++)
+                for (int j = 1; j < buffer.Width - 1; j++)
                 {
                     ///Put a 3x3 mask on every pixel of the image(including buffer, as we need the borders)
                     int k = 0;
@@ -681,7 +662,7 @@ namespace Processor
                     double productG = maskG[0].G;
                     double productB = maskB[0].B;
 
-                    for(int x = 1; x < maskR.Length; x++)
+                    for (int x = 1; x < maskR.Length; x++)
                     {
                         productR *= maskR[x].R;
                         productG *= maskG[x].G;
@@ -716,14 +697,14 @@ namespace Processor
 
             int mse;
 
-            Task<double> taskR= Task<double>.Factory.StartNew(() =>
+            Task<double> taskR = Task<double>.Factory.StartNew(() =>
             {
                 double sumOfSquaresR = 0;
-                for(int x = 0; x < height * bmpData1.Stride - 2; x += 3)
+                for (int x = 0; x < height * bmpData1.Stride - 2; x += 3)
                 {
                     byte pixel1R = pixels1[x];
                     byte pixel2R = pixels2[x];
-         
+
                     sumOfSquaresR += Math.Pow(pixel1R - pixel2R, 2);
                 }
                 return sumOfSquaresR;
@@ -731,21 +712,21 @@ namespace Processor
 
             Task<double> taskG = Task<double>.Factory.StartNew(() =>
             {
-            double sumOfSquaresG = 0;
-                for(int x = 0; x < height * bmpData1.Stride - 2; x += 3)
+                double sumOfSquaresG = 0;
+                for (int x = 0; x < height * bmpData1.Stride - 2; x += 3)
                 {
                     byte pixel1G = pixels1[x + 1];
                     byte pixel2G = pixels2[x + 1];
-              
+
                     sumOfSquaresG += Math.Pow(pixel1G - pixel2G, 2);
                 }
                 return sumOfSquaresG;
             });
 
-            Task <double>taskB = Task<double>.Factory.StartNew(() =>
+            Task<double> taskB = Task<double>.Factory.StartNew(() =>
             {
-            double sumOfSquaresB = 0;
-                for(int x = 0; x < height * bmpData1.Stride - 2; x += 3)
+                double sumOfSquaresB = 0;
+                for (int x = 0; x < height * bmpData1.Stride - 2; x += 3)
                 {
                     byte pixel1B = pixels1[x + 2];
                     byte pixel2B = pixels2[x + 2];
@@ -753,7 +734,7 @@ namespace Processor
                 }
                 return sumOfSquaresB;
             });
-          
+
             mse = (int)((taskR.Result + taskG.Result + taskB.Result) / (3 * height * width));
             return mse;
         }
@@ -779,7 +760,7 @@ namespace Processor
             double sumOfSquaresB = 0;
             int mse;
 
-            for(int x = 0; x < bmpData1.Height * bmpData1.Stride - 2; x += 3)
+            for (int x = 0; x < bmpData1.Height * bmpData1.Stride - 2; x += 3)
             {
                 byte pixel1R = pixels1[x];
                 byte pixel1G = pixels1[x + 1];
@@ -822,7 +803,7 @@ namespace Processor
 
             double pmse;
 
-            for(int x = 0; x < height * bmpData1.Stride - 2; x += 3)
+            for (int x = 0; x < height * bmpData1.Stride - 2; x += 3)
             {
 
                 byte pixel1R = pixels1[x];
@@ -850,7 +831,7 @@ namespace Processor
         }
 
         public static int MaximumDifference(string firstImage, string secondImage)
-        { 
+        {
             Bitmap bmp1 = new Bitmap(firstImage);
             Bitmap bmp2 = new Bitmap(secondImage);
             int height = bmp1.Height;
@@ -940,7 +921,7 @@ namespace Processor
 
         public static double PeakSignalToNoiseRatio(string firstImage, string secondImage)
         {
-     
+
             return 20 * Math.Log10(255 + 255 + 255) - 10 * Math.Log10(MeanSquareError(firstImage, secondImage));
         }
     }
