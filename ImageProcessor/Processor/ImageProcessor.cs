@@ -231,9 +231,6 @@ namespace Processor
             resultBitmap.UnlockBits(resultBitmapData);
             ih.saveImage(resultBitmap, savePath);
         }
-
-            ih.saveImage(b, savePath);
-        }
         /// <summary>
         /// Flips the image horizontally.
         /// </summary>
@@ -583,14 +580,14 @@ namespace Processor
                     //Remove alpha elements from both sides of the sorted arrayList
                     for (int l = 0; l < alpha; l++)
                     {
-                        colorsR.RemoveAt(l);
-                        colorsR.RemoveAt(colorsR.Count - l - 1);
+                        colorsR.RemoveAt(0);
+                        colorsR.RemoveAt(colorsR.Count - 1);
 
-                        colorsG.RemoveAt(l);
-                        colorsG.RemoveAt(colorsG.Count - l - 1);
+                        colorsG.RemoveAt(0);
+                        colorsG.RemoveAt(colorsG.Count - 1);
 
-                        colorsB.RemoveAt(l);
-                        colorsB.RemoveAt(colorsB.Count - l - 1);
+                        colorsB.RemoveAt(0);
+                        colorsB.RemoveAt(colorsB.Count - 1);
                     }
 
                     //Calculate the mean value of the mask
