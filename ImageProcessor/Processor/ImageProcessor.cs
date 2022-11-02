@@ -19,11 +19,7 @@ namespace Processor
         public static void Process(CommandLineOptions o)
         {
             Bitmap bmp;
-            if (o == null)
-                // TODO: Add null handling
-                return;
             if (o.firstPath == null || o.secondPath == null)
-                // TODO: Add null handling
                 return;
             else
                 bmp = ih.loadImage(o.firstPath);
@@ -524,6 +520,12 @@ namespace Processor
             //equally as many pixels from around the center pxiel.
             if (m % 2 == 0) m++;
             if (n % 2 == 0) n++;
+
+            if(alpha > (m * n) / 2)
+            {
+                Console.WriteLine("Alpha cannot be bigger than m*n/2");
+                return;
+            }
 
             int radiusN = (int)Math.Floor(maskN / 2.0);
             int radiusM = (int)Math.Floor(maskM / 2.0);
