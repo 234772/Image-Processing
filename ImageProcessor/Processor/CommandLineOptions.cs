@@ -20,8 +20,10 @@ namespace Processor
         public bool contrast { get; set; }
         [Option(shortName: 'n', longName: "negative", Required = false, HelpText = "Make a negative of the image", Default = false)]
         public bool negative { get; set; }
-        [Option(shortName: 'r', longName: "resize", Required = false, HelpText = "Change image size to a new one (width x height)")]
+        [Option(shortName: 'e', longName: "enlarge", Required = false, HelpText = "Enlarge image to new dimensions (width x height)")]
         public IEnumerable<int> Dimensions { get; set; }
+        [Option(longName: "shrink", Required = false, HelpText = "Shrink image to new dimensions (width x height)")]
+        public IEnumerable<int> DimensionsS { get; set; }
         [Option(shortName: 'h', longName: "hflip", Required = false, HelpText = "Horizontally flips the image (mirrors it)", Default = false)]
         public bool hflip { get; set; }
         [Option(shortName: 'v', longName: "vflip", Required = false, HelpText = "Flips the image vertically", Default = false)]

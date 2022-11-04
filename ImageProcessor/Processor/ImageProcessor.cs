@@ -46,6 +46,13 @@ namespace Processor
                 List<int> dimensions = new List<int>(o.Dimensions);
                 BilinearResizing(bmp, o.secondPath, dimensions[0], dimensions[1]);
             }
+            if (o.DimensionsS.Count() > 0)
+            {
+                //Some function calls take multiple parameters from the user,
+                //so we put them into IEnumerable and separate them here.
+                List<int> dimensions = new List<int>(o.DimensionsS);
+                BilinearResizing(bmp, o.secondPath, dimensions[0], dimensions[1]);
+            }
             if (o.hflip)
                 HorizontalFlip(ih.Bmp, o.secondPath);
             if (o.vflip)
