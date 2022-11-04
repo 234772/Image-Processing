@@ -10,9 +10,9 @@ namespace Processor
 {
     public class CommandLineOptions
     {
-        [Value(index: 0, Required = true, HelpText = "Full path to an image that you want to process.")]
+        [Value(index: 0, Required = true, HelpText = "Name of the bitmap you want to process.")]
         public string firstPath { get; set; }
-        [Value(index: 1, Required = true, HelpText = "Full path to where you want to save the image", Default = "@C:\\")]
+        [Value(index: 1, Required = false, HelpText = "Name of the output file", Default = "output.bmp")]
         public string secondPath { get; set; }
         [Option(shortName: 'b', longName: "brightness", Required = false, HelpText = "Increase or decrease brightness of the image, by passing in a number 0-255", Default = 0)]
         public int brightness { get; set; }

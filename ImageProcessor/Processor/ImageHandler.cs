@@ -29,6 +29,7 @@ namespace Processor
         {
             try
             {
+                bmp = image;
                 image.Save(path);
             }
             catch(ArgumentException)

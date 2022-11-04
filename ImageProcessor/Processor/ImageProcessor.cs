@@ -23,12 +23,22 @@ namespace Processor
                 return;
             else
                 bmp = ih.loadImage(o.firstPath);
+            if (o.ValuesA.Count() > 0)
+            {
+                List<int> values = new List<int>(o.ValuesA);
+                AlphaTrimmedFilter(ih.Bmp, o.secondPath, values[0], values[1], values[2]);
+            }
+            if (o.ValuesG.Count() > 0)
+            {
+                List<int> values = new List<int>(o.ValuesG);
+                GeometricMeanFilter(ih.Bmp, o.secondPath, values[0], values[1]);
+            }
             if (o.brightness != 0)
-                ChangeBrightness(bmp, o.secondPath, o.brightness);
+                ChangeBrightness(ih.Bmp, o.secondPath, o.brightness);
             if (o.contrast)
-                ChangeContrast(bmp, o.secondPath);
+                ChangeContrast(ih.Bmp, o.secondPath);
             if (o.negative)
-                NegativeImage(bmp, o.secondPath);
+                NegativeImage(ih.Bmp, o.secondPath);
             if (o.Dimensions.Count() > 0)
             {
                 //Some function calls take multiple parameters from the user,
@@ -37,21 +47,11 @@ namespace Processor
                 BilinearResizing(bmp, o.secondPath, dimensions[0], dimensions[1]);
             }
             if (o.hflip)
-                HorizontalFlip(bmp, o.secondPath);
+                HorizontalFlip(ih.Bmp, o.secondPath);
             if (o.vflip)
-                VerticalFlip(bmp, o.secondPath);
+                VerticalFlip(ih.Bmp, o.secondPath);
             if (o.dflip)
-                DiagonalFlip(bmp, o.secondPath);
-            if (o.ValuesA.Count() > 0)
-            {
-                List<int> values = new List<int>(o.ValuesA);
-                AlphaTrimmedFilter(bmp, o.secondPath, values[0], values[1], values[2]);
-            }
-            if (o.ValuesG.Count() > 0)
-            {
-                List<int> values = new List<int>(o.ValuesG);
-                GeometricMeanFilter(bmp, o.secondPath, values[0], values[1]);
-            }
+                DiagonalFlip(ih.Bmp, o.secondPath);
             if (o.meanSquare)
                 Console.WriteLine(MeanSquareErrorAsync(o.firstPath, o.secondPath));
             if (o.peakMeanSquare)
