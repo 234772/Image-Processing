@@ -158,8 +158,7 @@ namespace Processor
             double nYFactor = (double)image.Height / (double)nHeight;
             double fraction_x, fraction_y, one_minus_x, one_minus_y;
             int ceil_x, ceil_y, floor_x, floor_y;
-            byte red, green, blue;
-            byte b1, b2;
+            byte red, green, blue, b1, b2;
             int bytesPerPixel = 3;
 
             Bitmap resultBitmap = new Bitmap(nWidth, nHeight);
@@ -181,12 +180,12 @@ namespace Processor
                     ceil_x = floor_x + 1;
 
                     if (ceil_x >= image.Width)
-                        ceil_x = floor_x;
+                        ceil_x--;
 
                     ceil_y = floor_y + 1;
 
                     if (ceil_y >= image.Height)
-                        ceil_y = floor_y;
+                        ceil_y--;
 
                     fraction_x = x * nXFactor - floor_x;
                     fraction_y = y * nYFactor - floor_y;
