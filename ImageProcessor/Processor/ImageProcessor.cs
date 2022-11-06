@@ -35,8 +35,8 @@ namespace Processor
             }
             if (o.brightness != 0)
                 ChangeBrightness(ih.Bmp, o.secondPath, o.brightness);
-            if (o.contrast)
-                ChangeContrast(ih.Bmp, o.secondPath);
+            if (o.contrast !=0)
+                ChangeContrast(ih.Bmp, o.secondPath,o.contrast);
             if (o.negative)
                 NegativeImage(ih.Bmp, o.secondPath);
             if (o.Dimensions.Count() > 0)
@@ -89,6 +89,20 @@ namespace Processor
                 return (byte)(p1 + p2);
         }
         /// <summary>
+        /// Assures that the value is at the interval <0,255>. If value > 255 it returns 255, if values < 0 it returns 0.
+        /// </summary>
+        /// <param name="value"></param>
+        /// <returns>Byte value between 0 and 255.</returns>
+        private static byte Truncate1(int value)
+        {
+            if (value > 255)
+                return 255;
+            else if (value < 0)
+                return 0;
+            else
+                return (byte)value;
+        }
+        /// <summary>
         /// Method used to increase or decrease brightness of an image.
         /// </summary>
         /// <param name="image"></param>
@@ -117,6 +131,7 @@ namespace Processor
 
             ih.saveImage(bmp, savePath);
         }
+
         /// <summary>
         /// Method that produces version of an image, with negative of the original color values.
         /// </summary>
@@ -386,92 +401,40 @@ namespace Processor
             ih.saveImage(image, savePath);
         }
         /// <summary>
-        /// Changes the contrast of an image to a higher value. Uses histogram equalization.
+        /// Changes the contrast of an image to a higher value.
         /// </summary>
         /// <param name="image"></param>
         /// <param name="savePath"></param>
-        public static void ChangeContrast(Bitmap image, string savePath)
+        /// <param name="contrast"></param>
+        public static void ChangeContrast(Bitmap image, string savePath, int contrast)
         {
             int width = image.Width;
             int height = image.Height;
-
             BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-
             int bytes = bmpData.Stride * bmpData.Height;
-            byte[] rgbValues = new byte[bytes];
+            byte[] originalRGB = new byte[bytes];
             byte[] newBmp = new byte[bytes];
 
-            double[] probabilityR = new double[256];
-            double[] probabilityG = new double[256];
-            double[] probabilityB = new double[256];
-
-            byte[,] r = new byte[width, height];
-            byte[,] g = new byte[width, height];
-            byte[,] b = new byte[width, height];
-
-            IntPtr ptr = bmpData.Scan0;
-
             // Copy the RGB values into the array.
-            Marshal.Copy(ptr, rgbValues, 0, image.Height * bmpData.Stride);
+            Marshal.Copy(bmpData.Scan0, originalRGB, 0, image.Height * bmpData.Stride);
 
-            //Put green, blue and red values into separate arrays.
-            int k = 0;
-            for (int i = 0; i < height; i++)
+            float factor = (259 * ((float)contrast + 255)) / (255 * (259 - (float)contrast));
+
+            for (int x = 0; x < bytes - 2; x += 3)
             {
-                for (int j = 0; j < width; j++)
-                {
-                    b[j, i] = rgbValues[k];
-                    g[j, i] = rgbValues[k + 1];
-                    r[j, i] = rgbValues[k + 2];
-                    k += 3;
-                }
-            }
+                byte red = originalRGB[x + 2];
+                byte green = originalRGB[x + 1];
+                byte blue = originalRGB[x];
 
-            //Calculate how many pixels with given intensity are there (sort of a histogram).
-            for (int i = 0; i < height; i++)
-            {
-                for (int j = 0; j < width; j++)
-                {
-                    probabilityR[r[i, j]]++;
-                    probabilityG[g[i, j]]++;
-                    probabilityB[b[i, j]]++;
-                }
-            }
+                byte newRed = Truncate1((int)(factor * (red - 128)) + 128);
+                byte newGreen = Truncate1((int)(factor * (green - 128)) + 128);
+                byte newBlue = Truncate1((int)(factor * (blue - 128)) + 128);
 
-            for (int i = 0; i < 256; i++)
-            {
-                probabilityR[i] /= (width * height);
-                probabilityG[i] /= (width * height);
-                probabilityB[i] /= (width * height);
+                newBmp[x + 2] = newRed;
+                newBmp[x + 1] = newGreen;
+                newBmp[x] = newBlue;
             }
-
-            int p = 0;
-            for (int j = 0; j < height; j++)
-            {
-                for (int i = 0; i < width; i++)
-                {
-                    double sumR = 0;
-                    double sumG = 0;
-                    double sumB = 0;
-
-                    for (int x = 0; x < r[i, j]; x++)
-                    {
-                        sumR += probabilityR[x];
-                    }
-                    for (int x = 0; x < g[i, j]; x++)
-                    {
-                        sumG += probabilityG[x];
-                    }
-                    for (int x = 0; x < b[i, j]; x++)
-                    {
-                        sumB += probabilityB[x];
-                    }
-                    newBmp[p++] = (byte)(Math.Floor(255 * sumB));
-                    newBmp[p++] = (byte)(Math.Floor(255 * sumG));
-                    newBmp[p++] = (byte)(Math.Floor(255 * sumR));
-                }
-            }
-            Marshal.Copy(newBmp, 0, ptr, bytes);
+            Marshal.Copy(newBmp, 0, bmpData.Scan0, bytes);
             image.UnlockBits(bmpData);
 
             ih.saveImage(image, savePath);
