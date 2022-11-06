@@ -16,7 +16,7 @@ namespace Processor
         public string secondPath { get; set; }
         [Option(shortName: 'b', longName: "brightness", Required = false, HelpText = "Increase or decrease brightness of the image, by passing in a number 0-255", Default = 0)]
         public int brightness { get; set; }
-        [Option(shortName: 'c', longName: "contrast", Required = false, HelpText = "Increase contrast of the image", Default = false)]
+        [Option(shortName: 'c', longName: "contrast", Required = false, HelpText = "Increase contrast of the image", Default = 0)]
         public int contrast { get; set; }
         [Option(shortName: 'n', longName: "negative", Required = false, HelpText = "Make a negative of the image", Default = false)]
         public bool negative { get; set; }
