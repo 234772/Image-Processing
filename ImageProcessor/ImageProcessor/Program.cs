@@ -16,23 +16,15 @@ namespace Presentation
         public static void Main(string[] args)
         {
             Stopwatch stopwatch = new Stopwatch();
+            Process proc = Process.GetCurrentProcess();
             string projectPath = Directory.GetCurrentDirectory();
             Parser.Default.ParseArguments<CommandLineOptions>(args)
                    .WithParsed<CommandLineOptions>(o =>
                    {
-
- 
-                       //ImageProcessor.Ih.loadImage(o.loadPath);
                        stopwatch.Start();
                        ImageProcessor.Process(o);
+                       Console.WriteLine(proc.PrivateMemorySize64);
                        stopwatch.Stop();
-                       //var image = o.images.ToList();
-                       //Console.WriteLine(ImageProcessor.MaximumDifference(image[0], image[1]));
-                       //ImageProcessor.AlphaTrimmedFilter();
-                       //if (ImageProcessor.Ih.Bmp != null)
-                       //{
-                       //    ImageProcessor.Ih.saveImage(projectPath + "\\" + o.savePath);
-                       //}
                    });
             Console.WriteLine("Elapsed Time is {0} ms", stopwatch.ElapsedMilliseconds);
             Console.ReadLine();
