@@ -69,6 +69,8 @@ namespace Processor
                 Console.WriteLine(SignalToNoiseRatio(o.firstPath, o.secondPath));
             if (o.peakSignalToNoiseRatio)
                 Console.WriteLine(PeakSignalToNoiseRatio(o.firstPath, o.secondPath));
+            if (o.histogram)
+                Histogram(ih.Bmp, o.secondPath);
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -932,6 +934,54 @@ namespace Processor
         {
 
             return 20 * Math.Log10(255 + 255 + 255) - 10 * Math.Log10(MeanSquareError(firstImage, secondImage));
+        }
+        public static void Histogram(Bitmap image, string safePath)
+        {
+            int histogramHeight = 500;
+            int height = image.Height;
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            int bytes_amount = height * bmpData.Stride;
+            byte[] pixels = new byte[bytes_amount];
+            int[] histogram = new int[256];
+
+            Bitmap histogramImage = new Bitmap(255, histogramHeight);
+            BitmapData histogramBytes = histogramImage.LockBits(new Rectangle(0, 0, 255, histogramHeight), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb); ;
+            byte[] histogramPixels = new byte[histogramBytes.Stride * histogramHeight];
+
+            Marshal.Copy(bmpData.Scan0, pixels, 0, bytes_amount);
+
+            for (int x = 0; x < bytes_amount; x+=3)
+            {
+                histogram[pixels[x]]++;
+            }
+
+            int histogram_max = 0;
+            for (int x = 0; x < 255; x++)
+            {
+                if (histogram[x] > histogram_max)
+                    histogram_max = histogram[x];
+            }
+
+            long divisor = histogram_max * 2;
+            for(int x = 0; x < 255; x++)
+            {
+                histogram[x] = (int)Math.Round((float)histogram[x] / divisor * histogramHeight);
+            }
+
+            for(int y = 0; y < 255; y++)
+            {
+            for (int x = 0; x < histogram[y]; x++)
+            {
+                    for(int color = 0; color < 3; color++)
+                    {
+                    histogramPixels[histogramBytes.Stride * (histogramHeight - 1 - x) + 3 * y + color] = 255;
+                    } 
+            }
+            }
+
+            Marshal.Copy(histogramPixels, 0, histogramBytes.Scan0, histogramBytes.Stride * histogramHeight);
+            histogramImage.UnlockBits(histogramBytes);
+            ih.saveImage(histogramImage, safePath);
         }
     }
 }
