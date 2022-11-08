@@ -947,6 +947,7 @@ namespace Processor
             else if(channel == Channel.Blue)
                 chosenChannel = 0;
 
+
             int width = image.Width;
             int height = image.Height; 
 
@@ -977,9 +978,12 @@ namespace Processor
                 histogram[chosenChannelValues[i]]++;
             }
 
-            for (int i = 0; i < 256; i++)
+            while (histogram.Max() > 512)
             {
-                Math.Floor(histogram[i] /= 10);
+                for (int i = 0; i < 256; i++)
+                {
+                    Math.Floor(histogram[i] /= 10);
+                }
             }
 
             Bitmap output = new Bitmap(512, 512);
