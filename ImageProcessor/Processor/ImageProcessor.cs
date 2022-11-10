@@ -1076,14 +1076,19 @@ namespace Processor
             }
 
             double divider = 1.0 / 3.0;
+            int p = 0;
             for(int i = 0; i < bytes; i+=3)
             {
                 double histogramSum = 0;
-                for(int j = 0; j < r[i]; j++)
+                for(int j = 0; j < r[p]; j++)
                 {
                     histogramSum += histogramR[j];
                 }
-                rgbValues[bytes] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1/numOfPixels) * histogramSum, 3);
+                //Console.WriteLine(1/numOfPixels);
+                rgbValues[i] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1.0 / numOfPixels) * histogramSum, 3);
+                rgbValues[i + 1] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1.0 / numOfPixels) * histogramSum, 3);
+                rgbValues[i + 2] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1.0 / numOfPixels) * histogramSum, 3);
+                p++;
             }
 
             Marshal.Copy(rgbValues, 0, bmpData.Scan0, bytes);
