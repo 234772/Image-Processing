@@ -46,6 +46,8 @@ namespace Processor
         public bool peakSignalToNoiseRatio { get; set; }
         [Option(longName: "histogram", HelpText = "Generates a histogram of specified channel of input image", Default = Channel.None)]
         public Channel channel { get; set; }
+        [Option(longName: "hpower", HelpText = "Improve the image quality, using Power 2/3 final probability density function", Default = null)]
+        public IEnumerable<byte> gs { get; set; }
 
         public enum Channel
         {
