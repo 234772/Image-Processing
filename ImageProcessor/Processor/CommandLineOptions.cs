@@ -44,5 +44,13 @@ namespace Processor
         public bool signalToNoiseRatio { get; set; }
         [Option(longName: "psnr", Required = false, HelpText = "Calculates the peak signal to noise ratio between two images", Default = false)]
         public bool peakSignalToNoiseRatio { get; set; }
+        [Option(longName: "cmean", HelpText = "Calculates the mean characteristic, of a given image.", Default = false)]
+        public bool mean { get; set; }
+        [Option(longName: "cvariance", HelpText = "Calculates the variance characteristic of a given image.", Default = false)]
+        public bool variance { get; set; }
+        [Option(longName: "cstdev", HelpText = "Calculates the standard deviation characteristic of a given image.", Default = false)]
+        public bool deviation { get; set; }
+        [Option(longName: "cvarcoi", HelpText = "Calculates the variation coefficient I characteristic of a given image.", Default = false)]
+        public bool variation { get; set; }
     }
 }

@@ -69,6 +69,14 @@ namespace Processor
                 Console.WriteLine(SignalToNoiseRatio(o.firstPath, o.secondPath));
             if (o.peakSignalToNoiseRatio)
                 Console.WriteLine(PeakSignalToNoiseRatio(o.firstPath, o.secondPath));
+            if (o.mean)
+                Console.WriteLine(Mean(ih.Bmp));
+            if (o.variance)
+                Console.WriteLine(Variance(ih.Bmp));
+            if (o.deviation)
+                Console.WriteLine(StandardDeviation(ih.Bmp));
+            if (o.variation)
+                Console.WriteLine(VariationCoefficientI(ih.Bmp));
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -932,6 +940,157 @@ namespace Processor
         {
 
             return 20 * Math.Log10(255 + 255 + 255) - 10 * Math.Log10(MeanSquareError(firstImage, secondImage));
+        }
+        /// <summary>
+        /// Calculates the mean characteristic, of a given image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
+        private static double Mean(Bitmap image)
+        {
+            double mean = 0;
+
+            int width = image.Width;
+            int height = image.Height;
+            int numOfPixels = height * width;
+
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            //Size of bitmapdata
+            int bytes = bmpData.Stride * bmpData.Height;
+            byte[] rgbValues = new byte[bytes];
+
+            //Copy the bitmapdata to rgbValues array
+            Marshal.Copy(bmpData.Scan0, rgbValues, 0, height * bmpData.Stride);
+
+            byte[] r = new byte[width * height];
+            byte[] g = new byte[width * height];
+            byte[] b = new byte[width * height];
+
+            double[] histogramR = new double[256];
+            double[] histogramG = new double[256];
+            double[] histogramB = new double[256];
+
+            //Split the image into 3 rgb channels
+            int k = 0;
+            for (int i = 0; i < bytes; i += 3)
+            {
+                b[k] = rgbValues[i];
+                g[k] = rgbValues[i + 1];
+                r[k++] = rgbValues[i + 2];
+            }
+
+            image.UnlockBits(bmpData);
+
+            //Create histograms for all the channels
+            for (int i = 0; i < height * width; i++)
+            {
+                histogramR[r[i]]++;
+                histogramG[b[i]]++;
+                histogramB[b[i]]++;
+            }
+
+            //Sum the histograms.
+            double histogramRSum = 0;
+            double histogramGSum = 0;
+            double histogramBSum = 0;
+            for (int i = 0; i < 256; i++)
+            {
+                histogramRSum +=  i * histogramR[i];
+                histogramGSum += i * histogramG[i];
+                histogramBSum += i * histogramB[i];
+            }
+
+            double histogramSum = (histogramRSum + histogramBSum + histogramGSum) / 3.0;
+
+            mean = (1.0 / numOfPixels) * histogramSum;
+
+            return mean;
+        }
+        /// <summary>
+        /// Calculates the variance characteristic of a given image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
+        private static double Variance(Bitmap image)
+        {
+            double variance = 0;
+            double mean = Mean(image);
+
+            int width = image.Width;
+            int height = image.Height;
+            int numOfPixels = height * width;
+
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            //Size of bitmapdata
+            int bytes = bmpData.Stride * bmpData.Height;
+            byte[] rgbValues = new byte[bytes];
+
+            //Copy the bitmapdata to rgbValues array
+            Marshal.Copy(bmpData.Scan0, rgbValues, 0, height * bmpData.Stride);
+
+            byte[] r = new byte[width * height];
+            byte[] g = new byte[width * height];
+            byte[] b = new byte[width * height];
+
+            double[] histogramR = new double[256];
+            double[] histogramG = new double[256];
+            double[] histogramB = new double[256];
+
+            //Split the image into 3 rgb channels
+            int k = 0;
+            for (int i = 0; i < bytes; i += 3)
+            {
+                b[k] = rgbValues[i];
+                g[k] = rgbValues[i + 1];
+                r[k++] = rgbValues[i + 2];
+            }
+
+            image.UnlockBits(bmpData);
+
+            //Create histograms for all the channels
+            for (int i = 0; i < height * width; i++)
+            {
+                histogramR[r[i]]++;
+                histogramG[b[i]]++;
+                histogramB[b[i]]++;
+            }
+
+            //Sum the histograms.
+            double histogramRSum = 0;
+            double histogramGSum = 0;
+            double histogramBSum = 0;
+            for (int i = 0; i < 256; i++)
+            {
+                histogramRSum += Math.Pow(i - mean, 2) * histogramR[i];
+                histogramGSum += Math.Pow(i - mean, 2) * histogramG[i];
+                histogramBSum += Math.Pow(i - mean, 2) * histogramB[i];
+            }
+
+            double histogramSum = (histogramRSum + histogramBSum + histogramGSum) / 3.0;
+
+            variance = (1.0 / numOfPixels) * histogramSum;
+
+            return variance;
+        }
+        /// <summary>
+        /// Calculates the standard deviation characteristic of a given image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
+        private static double StandardDeviation(Bitmap image)
+        {
+            return Math.Sqrt(Variance(image));
+        }
+        /// <summary>
+        /// Calculates the variation coefficient I characteristic of a given image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
+        private static double VariationCoefficientI(Bitmap image)
+        {
+            return StandardDeviation(image) / Mean(image);
         }
     }
 }
