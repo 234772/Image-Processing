@@ -69,6 +69,8 @@ namespace Processor
                 Console.WriteLine(SignalToNoiseRatio(o.firstPath, o.secondPath));
             if (o.peakSignalToNoiseRatio)
                 Console.WriteLine(PeakSignalToNoiseRatio(o.firstPath, o.secondPath));
+            if (o.sexdeti)
+                ExtractionOfDetailsI(ih.Bmp, o.secondPath);
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -93,7 +95,7 @@ namespace Processor
         /// </summary>
         /// <param name="value"></param>
         /// <returns>Byte value between 0 and 255.</returns>
-        private static byte Truncate1(int value)
+        private static byte Clamp(int value)
         {
             if (value > 255)
                 return 255;
@@ -426,9 +428,9 @@ namespace Processor
                 byte green = originalRGB[x + 1];
                 byte blue = originalRGB[x];
 
-                byte newRed = Truncate1((int)(factor * (red - 128)) + 128);
-                byte newGreen = Truncate1((int)(factor * (green - 128)) + 128);
-                byte newBlue = Truncate1((int)(factor * (blue - 128)) + 128);
+                byte newRed = Clamp((int)(factor * (red - 128)) + 128);
+                byte newGreen = Clamp((int)(factor * (green - 128)) + 128);
+                byte newBlue = Clamp((int)(factor * (blue - 128)) + 128);
 
                 newBmp[x + 2] = newRed;
                 newBmp[x + 1] = newGreen;
@@ -932,6 +934,66 @@ namespace Processor
         {
 
             return 20 * Math.Log10(255 + 255 + 255) - 10 * Math.Log10(MeanSquareError(firstImage, secondImage));
+        }
+        /// <summary>
+        /// Applys the extraction of details filter on an image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        public static void ExtractionOfDetailsI(Bitmap image, string savePath)
+        {
+            int height = image.Height;
+            int width = image.Width;
+
+            int[] hMask = new int[9] { 1, 1, 1, 1, -2, 1, -1, -1, -1 };
+
+            Bitmap res = new Bitmap(image.Width, image.Height);
+
+            //Run through every pixel of the original image.
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    //Put a 3x3 mask on every pixel of the image.
+                    int k = 0;
+
+                    Color[] mask = new Color[9];
+                    //Color[] maskG = new Color[9];
+                    //Color[] maskB = new Color[9];
+
+                    for (int x = i - 1; x < i + 1 + 1; x++)
+                    {
+                        if (x < 0) continue;
+                        if (x >= height) break;
+                        for (int y = j - 1; y < j + 1 + 1; y++)
+                        {
+                            if (y < 0) continue;
+                            if (y >= width) break;
+                            Color value;
+                            value = image.GetPixel(y, x);
+                            mask[k] = value;
+                            //maskG[k] = value;
+                            //maskB[k] = value;
+                            k++;
+                        }
+                    }
+
+                    int newR = 0;
+                    int newG = 0;
+                    int newB = 0;
+
+                    for (int z = 0; z < 9; z++)
+                    {
+                        newR += mask[z].R * hMask[z];
+                        newG += mask[z].G * hMask[z];
+                        newB += mask[z].B * hMask[z];
+                    }
+
+                    //Assign the new value to the target pixel
+                    res.SetPixel(j, i, Color.FromArgb(Clamp(newR), Clamp(newG), Clamp(newB)));
+                }
+            }
+            ih.saveImage(res, savePath);
         }
     }
 }

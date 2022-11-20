@@ -44,5 +44,7 @@ namespace Processor
         public bool signalToNoiseRatio { get; set; }
         [Option(longName: "psnr", Required = false, HelpText = "Calculates the peak signal to noise ratio between two images", Default = false)]
         public bool peakSignalToNoiseRatio { get; set; }
+        [Option(longName: "sexdeti", Required = false, HelpText = "Applys the extraction of details I filter on the image", Default = false)]
+        public bool sexdeti { get; set; }
     }
 }
