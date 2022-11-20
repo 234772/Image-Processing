@@ -71,6 +71,8 @@ namespace Processor
                 Console.WriteLine(PeakSignalToNoiseRatio(o.firstPath, o.secondPath));
             if (o.sexdeti)
                 ExtractionOfDetailsI(ih.Bmp, o.secondPath);
+            if (o.robertsII)
+                RobertsII(ih.Bmp, o.secondPath);
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -952,28 +954,24 @@ namespace Processor
             //Run through every pixel of the original image.
             for (int i = 0; i < height; i++)
             {
+                if (i == 0) continue;
+                if (i == height - 1) break;
                 for (int j = 0; j < width; j++)
                 {
+                    if (j == 0) continue;
+                    if (j == width - 1) break;
                     //Put a 3x3 mask on every pixel of the image.
                     int k = 0;
 
                     Color[] mask = new Color[9];
-                    //Color[] maskG = new Color[9];
-                    //Color[] maskB = new Color[9];
 
                     for (int x = i - 1; x < i + 1 + 1; x++)
                     {
-                        if (x < 0) continue;
-                        if (x >= height) break;
                         for (int y = j - 1; y < j + 1 + 1; y++)
                         {
-                            if (y < 0) continue;
-                            if (y >= width) break;
                             Color value;
                             value = image.GetPixel(y, x);
                             mask[k] = value;
-                            //maskG[k] = value;
-                            //maskB[k] = value;
                             k++;
                         }
                     }
@@ -991,6 +989,40 @@ namespace Processor
 
                     //Assign the new value to the target pixel
                     res.SetPixel(j, i, Color.FromArgb(Clamp(newR), Clamp(newG), Clamp(newB)));
+                }
+            }
+            ih.saveImage(res, savePath);
+        }
+        /// <summary>
+        /// Applys the roberts filter on an image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        public static void RobertsII(Bitmap image, string savePath)
+        {
+            int height = image.Height;
+            int width = image.Width;
+
+            Bitmap res = new Bitmap(image.Width, image.Height);
+
+            byte newR = 0;
+            byte newG = 0;
+            byte newB = 0;
+
+            //Run through every pixel of the original image.
+            for (int i = 0; i < height; i++)
+            {
+                if (i == 0) continue;
+                if (i == height - 1) break;
+                for (int j = 0; j < width; j++)
+                {
+                    if (j == 0) continue;
+                    if (j == width - 1) break;
+                    newR = (byte)(Math.Abs(image.GetPixel(j, i).R - image.GetPixel(j + 1, i + 1).R) + Math.Abs(image.GetPixel(j, i + 1).R - image.GetPixel(j + 1, i ).R));
+                    newG = (byte)(Math.Abs(image.GetPixel(j, i).G - image.GetPixel(j + 1, i + 1).G) + Math.Abs(image.GetPixel(j, i + 1).G - image.GetPixel(j + 1, i).G));
+                    newB = (byte)(Math.Abs(image.GetPixel(j, i).B - image.GetPixel(j + 1, i + 1).B) + Math.Abs(image.GetPixel(j, i + 1).B - image.GetPixel(j + 1, i).B));
+
+                    res.SetPixel(j, i, Color.FromArgb(newR, newG, newB));
                 }
             }
             ih.saveImage(res, savePath);
