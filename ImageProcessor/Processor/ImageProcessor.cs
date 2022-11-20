@@ -77,6 +77,14 @@ namespace Processor
                 Console.WriteLine(StandardDeviation(ih.Bmp));
             if (o.variation)
                 Console.WriteLine(VariationCoefficientI(ih.Bmp));
+            if (o.asymmetry)
+                Console.WriteLine(AsymmetryCoefficient(ih.Bmp));
+            if (o.flattening)
+                Console.WriteLine(FlatteningCoefficient(ih.Bmp));
+            if (o.variation2)
+                Console.WriteLine(VariationCoefficientII(ih.Bmp));
+            if (o.entropy)
+                Console.WriteLine(InformationSourceEntropy(ih.Bmp));
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -948,7 +956,7 @@ namespace Processor
         /// <returns></returns>
         private static double Mean(Bitmap image)
         {
-            double mean = 0;
+            double mean;
 
             int width = image.Width;
             int height = image.Height;
@@ -986,7 +994,7 @@ namespace Processor
             for (int i = 0; i < height * width; i++)
             {
                 histogramR[r[i]]++;
-                histogramG[b[i]]++;
+                histogramG[g[i]]++;
                 histogramB[b[i]]++;
             }
 
@@ -1014,7 +1022,7 @@ namespace Processor
         /// <returns></returns>
         private static double Variance(Bitmap image)
         {
-            double variance = 0;
+            double variance;
             double mean = Mean(image);
 
             int width = image.Width;
@@ -1053,7 +1061,7 @@ namespace Processor
             for (int i = 0; i < height * width; i++)
             {
                 histogramR[r[i]]++;
-                histogramG[b[i]]++;
+                histogramG[g[i]]++;
                 histogramB[b[i]]++;
             }
 
@@ -1091,6 +1099,271 @@ namespace Processor
         private static double VariationCoefficientI(Bitmap image)
         {
             return StandardDeviation(image) / Mean(image);
+        }
+        /// <summary>
+        /// Calculates the asymmetry coefficient characteristic of a given image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
+        private static double AsymmetryCoefficient(Bitmap image)
+        {
+            double asymmetry;
+
+            double mean = Mean(image);
+            double deviation = StandardDeviation(image);
+
+            int width = image.Width;
+            int height = image.Height;
+            int numOfPixels = height * width;
+
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            //Size of bitmapdata
+            int bytes = bmpData.Stride * bmpData.Height;
+            byte[] rgbValues = new byte[bytes];
+
+            //Copy the bitmapdata to rgbValues array
+            Marshal.Copy(bmpData.Scan0, rgbValues, 0, height * bmpData.Stride);
+
+            byte[] r = new byte[width * height];
+            byte[] g = new byte[width * height];
+            byte[] b = new byte[width * height];
+
+            double[] histogramR = new double[256];
+            double[] histogramG = new double[256];
+            double[] histogramB = new double[256];
+
+            //Split the image into 3 rgb channels
+            int k = 0;
+            for (int i = 0; i < bytes; i += 3)
+            {
+                b[k] = rgbValues[i];
+                g[k] = rgbValues[i + 1];
+                r[k++] = rgbValues[i + 2];
+            }
+
+            image.UnlockBits(bmpData);
+
+            //Create histograms for all the channels
+            for (int i = 0; i < height * width; i++)
+            {
+                histogramR[r[i]]++;
+                histogramG[g[i]]++;
+                histogramB[b[i]]++;
+            }
+
+            //Sum the histograms.
+            double histogramRSum = 0;
+            double histogramGSum = 0;
+            double histogramBSum = 0;
+            for (int i = 0; i < 256; i++)
+            {
+                histogramRSum += Math.Pow(i - mean, 3.0) * histogramR[i];
+                histogramGSum += Math.Pow(i - mean, 3.0) * histogramG[i];
+                histogramBSum += Math.Pow(i - mean, 3.0) * histogramB[i];
+            }
+
+            double histogramSum = (histogramRSum + histogramBSum + histogramGSum) / 3.0;
+
+            asymmetry = (1.0 / Math.Pow(deviation, 3)) * (1.0 / numOfPixels) * histogramSum;
+
+            return asymmetry;
+        }
+        /// <summary>
+        /// Calculates the flattening coefficient characteristic of a given image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
+        private static double FlatteningCoefficient(Bitmap image)
+        {
+            double flattening;
+
+            double mean = Mean(image);
+            double deviation = StandardDeviation(image);
+
+            int width = image.Width;
+            int height = image.Height;
+            int numOfPixels = height * width;
+
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            //Size of bitmapdata
+            int bytes = bmpData.Stride * bmpData.Height;
+            byte[] rgbValues = new byte[bytes];
+
+            //Copy the bitmapdata to rgbValues array
+            Marshal.Copy(bmpData.Scan0, rgbValues, 0, height * bmpData.Stride);
+
+            byte[] r = new byte[width * height];
+            byte[] g = new byte[width * height];
+            byte[] b = new byte[width * height];
+
+            double[] histogramR = new double[256];
+            double[] histogramG = new double[256];
+            double[] histogramB = new double[256];
+
+            //Split the image into 3 rgb channels
+            int k = 0;
+            for (int i = 0; i < bytes; i += 3)
+            {
+                b[k] = rgbValues[i];
+                g[k] = rgbValues[i + 1];
+                r[k++] = rgbValues[i + 2];
+            }
+
+            image.UnlockBits(bmpData);
+
+            //Create histograms for all the channels
+            for (int i = 0; i < height * width; i++)
+            {
+                histogramR[r[i]]++;
+                histogramG[g[i]]++;
+                histogramB[b[i]]++;
+            }
+
+            //Sum the histograms.
+            double histogramRSum = 0;
+            double histogramGSum = 0;
+            double histogramBSum = 0;
+            for (int i = 0; i < 256; i++)
+            {
+                histogramRSum += Math.Pow(i - mean, 4.0) * histogramR[i] - 3.0;
+                histogramGSum += Math.Pow(i - mean, 4.0) * histogramG[i] - 3.0;
+                histogramBSum += Math.Pow(i - mean, 4.0) * histogramB[i] - 3.0;
+            }
+
+            double histogramSum = (histogramRSum + histogramBSum + histogramGSum) / 3.0;
+
+            flattening = (1.0 / Math.Pow(deviation, 4)) * (1.0 / numOfPixels) * histogramSum;
+
+            return flattening;
+        }
+        /// <summary>
+        /// Calculates the variant coefficient II characteristic of a given image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
+        public static double VariationCoefficientII(Bitmap image)
+        {
+            double variation;
+
+            int width = image.Width;
+            int height = image.Height;
+            int numOfPixels = height * width;
+
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            //Size of bitmapdata
+            int bytes = bmpData.Stride * bmpData.Height;
+            byte[] rgbValues = new byte[bytes];
+
+            //Copy the bitmapdata to rgbValues array
+            Marshal.Copy(bmpData.Scan0, rgbValues, 0, height * bmpData.Stride);
+
+            byte[] r = new byte[width * height];
+            byte[] g = new byte[width * height];
+            byte[] b = new byte[width * height];
+
+            double[] histogramR = new double[256];
+            double[] histogramG = new double[256];
+            double[] histogramB = new double[256];
+
+            //Split the image into 3 rgb channels
+            int k = 0;
+            for (int i = 0; i < bytes; i += 3)
+            {
+                b[k] = rgbValues[i];
+                g[k] = rgbValues[i + 1];
+                r[k++] = rgbValues[i + 2];
+            }
+
+            image.UnlockBits(bmpData);
+
+            //Create histograms for all the channels
+            for (int i = 0; i < height * width; i++)
+            {
+                histogramR[r[i]]++;
+                histogramG[g[i]]++;
+                histogramB[b[i]]++;
+            }
+
+            //Sum the histograms.
+            double histogramRSum = 0;
+            double histogramGSum = 0;
+            double histogramBSum = 0;
+            for (int i = 0; i < 256; i++)
+            {
+                histogramRSum += Math.Pow(histogramR[i], 2);
+                histogramGSum += Math.Pow(histogramG[i], 2);
+                histogramBSum += Math.Pow(histogramB[i], 2);
+            }
+
+            double histogramSum = (histogramRSum + histogramGSum + histogramBSum) / 3.0;
+
+            variation = Math.Pow(1.0 / numOfPixels, 2) * histogramSum;
+
+            return variation;
+        }
+        public static double InformationSourceEntropy(Bitmap image)
+        {
+            double entropy;
+
+            int width = image.Width;
+            int height = image.Height;
+            int numOfPixels = height * width;
+
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            //Size of bitmapdata
+            int bytes = bmpData.Stride * bmpData.Height;
+            byte[] rgbValues = new byte[bytes];
+
+            //Copy the bitmapdata to rgbValues array
+            Marshal.Copy(bmpData.Scan0, rgbValues, 0, height * bmpData.Stride);
+
+            byte[] r = new byte[width * height];
+            byte[] g = new byte[width * height];
+            byte[] b = new byte[width * height];
+
+            double[] histogramR = new double[256];
+            double[] histogramG = new double[256];
+            double[] histogramB = new double[256];
+
+            //Split the image into 3 rgb channels
+            int k = 0;
+            for (int i = 0; i < bytes; i += 3)
+            {
+                b[k] = rgbValues[i];
+                g[k] = rgbValues[i + 1];
+                r[k++] = rgbValues[i + 2];
+            }
+
+            image.UnlockBits(bmpData);
+
+            //Create histograms for all the channels
+            for (int i = 0; i < height * width; i++)
+            {
+                histogramR[r[i]]++;
+                histogramG[g[i]]++;
+                histogramB[b[i]]++;
+            }
+
+            //Sum the histograms.
+            double histogramRSum = 0;
+            double histogramGSum = 0;
+            double histogramBSum = 0;
+            for (int i = 0; i < 256; i++)
+            {
+                histogramRSum += histogramR[i] * Math.Log(histogramR[i] / numOfPixels, 2);
+                histogramGSum += histogramG[i] * Math.Log(histogramG[i] / numOfPixels, 2);
+                histogramBSum += histogramB[i] * Math.Log(histogramB[i] / numOfPixels, 2);
+            }
+
+            double histogramSum = (histogramRSum + histogramGSum + histogramBSum) / 3.0;
+
+            entropy = - (1.0 / numOfPixels) * histogramSum;
+
+            return entropy;
         }
     }
 }
