@@ -1014,8 +1014,6 @@ namespace Processor
                     if (j == width - 1) break;
 
                     int newR = 0;
-                    //int newG = 0;
-                    //int newB = 0;
 
                     Color[] pixelValues = new Color[9];
 
