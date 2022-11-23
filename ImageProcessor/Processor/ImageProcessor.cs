@@ -73,6 +73,9 @@ namespace Processor
                 ExtractionOfDetailsI(ih.Bmp, o.secondPath);
             if (o.robertsII)
                 RobertsII(ih.Bmp, o.secondPath);
+            if (o.sexdetio)
+                ExtractionOfDetailsIOptimized(ih.Bmp, o.secondPath);
+                
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -989,6 +992,46 @@ namespace Processor
 
                     //Assign the new value to the target pixel
                     res.SetPixel(j, i, Color.FromArgb(Clamp(newR), Clamp(newG), Clamp(newB)));
+                }
+            }
+            ih.saveImage(res, savePath);
+        }
+        public static void ExtractionOfDetailsIOptimized(Bitmap image, string savePath)
+        {
+            int height = image.Height;
+            int width = image.Width;
+
+            Bitmap res = new Bitmap(image.Width, image.Height);
+
+            //Run through every pixel of the original image.
+            for (int i = 0; i < height; i++)
+            {
+                if (i == 0) continue;
+                if (i == height - 1) break;
+                for (int j = 0; j < width; j++)
+                {
+                    if (j == 0) continue;
+                    if (j == width - 1) break;
+
+                    int newR = 0;
+                    //int newG = 0;
+                    //int newB = 0;
+
+                    Color[] pixelValues = new Color[9];
+
+                    pixelValues[0] = image.GetPixel(j - 1, i - 1);
+                    pixelValues[1] = image.GetPixel(j, i - 1);
+                    pixelValues[2] = image.GetPixel(j + 1, i - 1);
+                    pixelValues[3] = image.GetPixel(j - 1, i);
+                    pixelValues[4] = image.GetPixel(j, i);
+                    pixelValues[5] = image.GetPixel(j + 1, i);
+                    pixelValues[6] = image.GetPixel(j - 1, i + 1);
+                    pixelValues[7] = image.GetPixel(j, i + 1);
+                    pixelValues[8] = image.GetPixel(j + 1, i + 1);
+
+                    newR = pixelValues[0].R * 1 + pixelValues[1].R * 1 + pixelValues[2].R * 1 + pixelValues[3].R * 1 + pixelValues[4].R * (-2) + pixelValues[5].R * 1 + pixelValues[6].R * (-1) + pixelValues[7].R * (-1) + pixelValues[8].R * (-1);
+
+                    res.SetPixel(j, i, Color.FromArgb(Clamp(newR), Clamp(newR), Clamp(newR)));
                 }
             }
             ih.saveImage(res, savePath);
