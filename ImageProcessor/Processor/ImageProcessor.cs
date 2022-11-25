@@ -72,7 +72,7 @@ namespace Processor
                 Console.WriteLine(PeakSignalToNoiseRatio(o.firstPath, o.secondPath));
             if (o.channel == Channel.Red || o.channel == Channel.Blue || o.channel == Channel.Green)
                 HistogramImage(ih.Bmp, o.secondPath, o.channel);
-            if(o.gs != null)
+            if(o.gs.Any())
             {
                 List<byte> gs = new List<byte>(o.gs);
                 PowerFinalProbabilityDensityFunction(ih.Bmp, o.secondPath, gs[0], gs[1]);
