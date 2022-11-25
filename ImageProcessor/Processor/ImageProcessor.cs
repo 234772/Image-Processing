@@ -74,7 +74,7 @@ namespace Processor
                 HistogramImage(ih.Bmp, o.secondPath, o.channel);
             if(o.gs.Any())
             {
-                List<byte> gs = new List<byte>(o.gs);
+                List<double> gs = new List<double>(o.gs);
                 PowerFinalProbabilityDensityFunction(ih.Bmp, o.secondPath, gs[0], gs[1]);
             }
             if (o.mean)
@@ -1065,8 +1065,17 @@ namespace Processor
         /// <param name="savePath"></param>
         /// <param name="gMin"></param>
         /// <param name="gMax"></param>
-        private static void PowerFinalProbabilityDensityFunction(Bitmap image, string savePath, byte gMin, byte gMax)
+        private static void PowerFinalProbabilityDensityFunction(Bitmap image, string savePath, double gMin, double gMax)
         {
+            if(gMin < 0 || gMax > 255 || gMin > gMax)
+            {
+                Console.WriteLine("Wrong input parameters. Check whether gmin is smaller than 0, or gmax higher than 255, or gmin higher than gmax");
+                return;
+            }
+
+            gMin = (int)gMin;
+            gMax = (int)gMax;
+
             int width = image.Width;
             int height = image.Height;
             int numOfPixels = height * width;
@@ -1647,9 +1656,9 @@ namespace Processor
 
             Bitmap res = new Bitmap(image.Width, image.Height);
 
-            byte newR = 0;
-            byte newG = 0;
-            byte newB = 0;
+            byte newR;
+            byte newG;
+            byte newB;
 
             //Run through every pixel of the original image.
             for (int i = 0; i < height; i++)

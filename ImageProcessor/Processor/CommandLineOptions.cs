@@ -47,7 +47,7 @@ namespace Processor
         [Option(longName: "histogram", HelpText = "Generates a histogram of specified channel of input image (Red, Green, Blue)", Default = Channel.None)]
         public Channel channel { get; set; }
         [Option(longName: "hpower", HelpText = "Improve the image quality, using Power 2/3 final probability density function", Default = null)]
-        public IEnumerable<byte> gs { get; set; }
+        public IEnumerable<double> gs { get; set; }
         [Option(longName: "cmean", HelpText = "Calculates the mean characteristic, of a given image.", Default = false)]
         public bool mean { get; set; }
         [Option(longName: "cvariance", HelpText = "Calculates the variance characteristic of a given image.", Default = false)]
