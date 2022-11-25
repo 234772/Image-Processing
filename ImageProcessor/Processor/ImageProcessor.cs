@@ -1035,6 +1035,13 @@ namespace Processor
 
             ih.saveImage(output, savePath);
         }
+        /// <summary>
+        /// Output the improved version of the image, using power 2/3 probability density function.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="gMin"></param>
+        /// <param name="gMax"></param>
         private static void PowerFinalProbabilityDensityFunction(Bitmap image, string savePath, byte gMin, byte gMax)
         {
             int width = image.Width;

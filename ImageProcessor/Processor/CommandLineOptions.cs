@@ -44,7 +44,7 @@ namespace Processor
         public bool signalToNoiseRatio { get; set; }
         [Option(longName: "psnr", Required = false, HelpText = "Calculates the peak signal to noise ratio between two images", Default = false)]
         public bool peakSignalToNoiseRatio { get; set; }
-        [Option(longName: "histogram", HelpText = "Generates a histogram of specified channel of input image", Default = Channel.None)]
+        [Option(longName: "histogram", HelpText = "Generates a histogram of specified channel of input image (Red, Green, Blue)", Default = Channel.None)]
         public Channel channel { get; set; }
         [Option(longName: "hpower", HelpText = "Improve the image quality, using Power 2/3 final probability density function", Default = null)]
         public IEnumerable<byte> gs { get; set; }
