@@ -1118,14 +1118,24 @@ namespace Processor
             int p = 0;
             for(int i = 0; i < bytes; i+=3)
             {
-                double histogramSum = 0;
-                for(int j = 0; j < r[p]; j++)
+                double histogramRSum = 0;
+                double histogramGSum = 0;
+                double histogramBSum = 0;
+                for (int j = 0; j < r[p]; j++)
                 {
                     histogramSum += histogramR[j];
                 }
-                rgbValues[i] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1.0 / numOfPixels) * histogramSum, 3);
-                rgbValues[i + 1] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1.0 / numOfPixels) * histogramSum, 3);
-                rgbValues[i + 2] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1.0 / numOfPixels) * histogramSum, 3);
+                for (int j = 0; j < g[p]; j++)
+                {
+                    histogramGSum += histogramG[j];
+                }
+                for (int j = 0; j < b[p]; j++)
+                {
+                    histogramBSum += histogramB[j];
+                }
+                rgbValues[i] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1.0 / numOfPixels) * histogramBSum, 3);
+                rgbValues[i + 1] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1.0 / numOfPixels) * histogramGSum, 3);
+                rgbValues[i + 2] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1.0 / numOfPixels) * histogramRSum, 3);
                 p++;
             }
 
