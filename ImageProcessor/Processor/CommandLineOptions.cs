@@ -56,5 +56,21 @@ namespace Processor
             Blue,
             None
         }
+        [Option(longName: "cmean", HelpText = "Calculates the mean characteristic, of a given image.", Default = false)]
+        public bool mean { get; set; }
+        [Option(longName: "cvariance", HelpText = "Calculates the variance characteristic of a given image.", Default = false)]
+        public bool variance { get; set; }
+        [Option(longName: "cstdev", HelpText = "Calculates the standard deviation characteristic of a given image.", Default = false)]
+        public bool deviation { get; set; }
+        [Option(longName: "cvarcoi", HelpText = "Calculates the variation coefficient I characteristic of a given image.", Default = false)]
+        public bool variation { get; set; }
+        [Option(longName: "casyco", HelpText = "Calculates the asymmetry coefficient characteristic of a given image.", Default = false)]
+        public bool asymmetry { get; set; }
+        [Option(longName: "cflatco", HelpText = "Calculates the flattening coefficient characteristic of a given image.", Default = false)]
+        public bool flattening { get; set; }
+        [Option(longName: "casyco", HelpText = "Calculates the variation coefficient II characteristic of a given image.", Default = false)]
+        public bool variation2 { get; set; }
+        [Option(longName: "casyco", HelpText = "Calculates the information source entropy characteristic of a given image.", Default = false)]
+        public bool entropy { get; set; }
     }
 }
