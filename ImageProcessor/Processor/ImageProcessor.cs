@@ -5,6 +5,7 @@ using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using static Processor.CommandLineOptions;
 
 namespace Processor
 {
@@ -44,14 +45,14 @@ namespace Processor
                 //Some function calls take multiple parameters from the user,
                 //so we put them into IEnumerable and separate them here.
                 List<int> dimensions = new List<int>(o.Dimensions);
-                BilinearResizing(bmp, o.secondPath, dimensions[0], dimensions[1]);
+                BilinearResizing(ih.Bmp, o.secondPath, dimensions[0], dimensions[1]);
             }
             if (o.DimensionsS.Count() > 0)
             {
                 //Some function calls take multiple parameters from the user,
                 //so we put them into IEnumerable and separate them here.
                 List<int> dimensions = new List<int>(o.DimensionsS);
-                BilinearResizing(bmp, o.secondPath, dimensions[0], dimensions[1]);
+                BilinearResizing(ih.Bmp, o.secondPath, dimensions[0], dimensions[1]);
             }
             if (o.hflip)
                 HorizontalFlip(ih.Bmp, o.secondPath);
@@ -69,6 +70,13 @@ namespace Processor
                 Console.WriteLine(SignalToNoiseRatio(o.firstPath, o.secondPath));
             if (o.peakSignalToNoiseRatio)
                 Console.WriteLine(PeakSignalToNoiseRatio(o.firstPath, o.secondPath));
+            if (o.channel == Channel.Red || o.channel == Channel.Blue || o.channel == Channel.Green)
+                HistogramImage(ih.Bmp, o.secondPath, o.channel);
+            if(o.gs.Any())
+            {
+                List<byte> gs = new List<byte>(o.gs);
+                PowerFinalProbabilityDensityFunction(ih.Bmp, o.secondPath, gs[0], gs[1]);
+            }
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -932,6 +940,167 @@ namespace Processor
         {
 
             return 20 * Math.Log10(255 + 255 + 255) - 10 * Math.Log10(MeanSquareError(firstImage, secondImage));
+        }
+        /// <summary>
+        /// Generates a histogram of an image, of the specified channel ('Red', 'Green', 'Blue')
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="channel"></param>
+        public static void HistogramImage(Bitmap image, string savePath, Channel channel)
+        {
+            int chosenChannel = 0;
+
+            if(channel == Channel.Red)
+                chosenChannel = 2;
+            else if(channel == Channel.Green)
+                chosenChannel = 1;
+            else if(channel == Channel.Blue)
+                chosenChannel = 0;
+
+
+            int width = image.Width;
+            int height = image.Height; 
+
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            //Size of bitmapdata
+            int bytes = bmpData.Stride * bmpData.Height;
+            byte[] rgbValues = new byte[bytes];
+
+            //Copy the bitmapdata to rgbValues array
+            Marshal.Copy(bmpData.Scan0, rgbValues, 0, height * bmpData.Stride);
+
+            image.UnlockBits(bmpData);
+
+            byte[] chosenChannelValues = new byte[width * height];
+            double[] histogram = new double[256];
+
+            //Separate the desired rgb channel
+            int k = 0;
+            for (int i = 0; i < bytes; i+=3)
+            {
+                chosenChannelValues[k++] = rgbValues[i + chosenChannel];
+            }
+
+            //Create a histogram for the desired channel
+            for(int i = 0; i < height * width; i++)
+            {
+                histogram[chosenChannelValues[i]]++;
+            }
+
+            //Scale down the image, if needed
+            while (histogram.Max() > 512)
+            {
+                for (int i = 0; i < 256; i++)
+                {
+                    Math.Floor(histogram[i] /= 10);
+                }
+            }
+
+            //Create a bew bitmap, to save the histogram to
+            Bitmap output = new Bitmap(512, 512);
+            BitmapData bmpData2 = output.LockBits(new Rectangle(0, 0, output.Width, output.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            int bytes2 = bmpData2.Stride * bmpData2.Height;
+            byte[] histogramValues = new byte[bytes2];
+
+            Marshal.Copy(bmpData2.Scan0, histogramValues, 0, bytes2);
+
+            //Set the bitmap to be white
+            for(int i = 0; i < bytes2; i++)
+            {
+                histogramValues[i] = 255;
+            }
+
+            //Draw the histogram
+            int d = output.Height * bmpData2.Stride - bmpData2.Stride;
+            int p = 0;
+            for(int i = d; i < bytes2; i+=6)
+            {
+                for(int j = 0; j < histogram[p]; j++)
+                {
+                    histogramValues[i - j * bmpData2.Stride] = 0;
+                    histogramValues[i - j * bmpData2.Stride + 1] = 0;
+                    histogramValues[i - j * bmpData2.Stride + 2] = 0;
+                    histogramValues[i - j * bmpData2.Stride + 3] = 0;
+                    histogramValues[i - j * bmpData2.Stride + 4] = 0;
+                    histogramValues[i - j * bmpData2.Stride + 5] = 0;
+                }
+                p++;
+            }
+
+            Marshal.Copy(histogramValues, 0, bmpData2.Scan0, bytes2);
+            output.UnlockBits(bmpData2);
+
+            ih.saveImage(output, savePath);
+        }
+        /// <summary>
+        /// Output the improved version of the image, using power 2/3 probability density function.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="gMin"></param>
+        /// <param name="gMax"></param>
+        private static void PowerFinalProbabilityDensityFunction(Bitmap image, string savePath, byte gMin, byte gMax)
+        {
+            int width = image.Width;
+            int height = image.Height;
+            int numOfPixels = height * width;
+
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            //Size of bitmapdata
+            int bytes = bmpData.Stride * bmpData.Height;
+            byte[] rgbValues = new byte[bytes];
+
+            //Copy the bitmapdata to rgbValues array
+            Marshal.Copy(bmpData.Scan0, rgbValues, 0, height * bmpData.Stride);
+
+            byte[] r = new byte[width * height];
+            byte[] g = new byte[width * height];
+            byte[] b = new byte[width * height];
+
+            double[] histogramR = new double[256];
+            double[] histogramG = new double[256];
+            double[] histogramB = new double[256];
+
+            //Split the image into 3 rgb channels
+            int k = 0;
+            for (int i = 0; i < bytes; i += 3)
+            {
+                b[k] = rgbValues[i];
+                g[k] = rgbValues[i + 1];
+                r[k++] = rgbValues[i + 2];
+            }
+
+            //Create histograms for all the channels
+            for (int i = 0; i < height * width; i++)
+            {
+                histogramR[r[i]]++;
+                histogramG[b[i]]++;
+                histogramB[b[i]]++;
+            }
+
+            double divider = 1.0 / 3.0;
+            int p = 0;
+            for(int i = 0; i < bytes; i+=3)
+            {
+                double histogramSum = 0;
+                for(int j = 0; j < r[p]; j++)
+                {
+                    histogramSum += histogramR[j];
+                }
+                rgbValues[i] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1.0 / numOfPixels) * histogramSum, 3);
+                rgbValues[i + 1] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1.0 / numOfPixels) * histogramSum, 3);
+                rgbValues[i + 2] = (byte)Math.Pow(Math.Pow(gMin, divider) + (Math.Pow(gMax, divider) - Math.Pow(gMin, divider)) * (1.0 / numOfPixels) * histogramSum, 3);
+                p++;
+            }
+
+            Marshal.Copy(rgbValues, 0, bmpData.Scan0, bytes);
+            image.UnlockBits(bmpData);
+
+            ih.saveImage(image, savePath);
         }
     }
 }
