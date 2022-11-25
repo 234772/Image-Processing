@@ -1110,7 +1110,7 @@ namespace Processor
             for (int i = 0; i < height * width; i++)
             {
                 histogramR[r[i]]++;
-                histogramG[b[i]]++;
+                histogramG[g[i]]++;
                 histogramB[b[i]]++;
             }
 
@@ -1549,9 +1549,12 @@ namespace Processor
             double histogramBSum = 0;
             for (int i = 0; i < 256; i++)
             {
-                histogramRSum += histogramR[i] * Math.Log(histogramR[i] / numOfPixels, 2);
-                histogramGSum += histogramG[i] * Math.Log(histogramG[i] / numOfPixels, 2);
-                histogramBSum += histogramB[i] * Math.Log(histogramB[i] / numOfPixels, 2);
+                if (histogramR[i] != 0)
+                    histogramRSum += histogramR[i] * Math.Log(histogramR[i] / numOfPixels, 2);
+                if (histogramG[i] != 0)
+                    histogramGSum += histogramG[i] * Math.Log(histogramG[i] / numOfPixels, 2);
+                if (histogramB[i] != 0)
+                    histogramBSum += histogramB[i] * Math.Log(histogramB[i] / numOfPixels, 2);
             }
 
             double histogramSum = (histogramRSum + histogramGSum + histogramBSum) / 3.0;

@@ -60,9 +60,9 @@ namespace Processor
         public bool asymmetry { get; set; }
         [Option(longName: "cflatco", HelpText = "Calculates the flattening coefficient characteristic of a given image.", Default = false)]
         public bool flattening { get; set; }
-        [Option(longName: "casyco", HelpText = "Calculates the variation coefficient II characteristic of a given image.", Default = false)]
+        [Option(longName: "cvarcoii", HelpText = "Calculates the variation coefficient II characteristic of a given image.", Default = false)]
         public bool variation2 { get; set; }
-        [Option(longName: "casyco", HelpText = "Calculates the information source entropy characteristic of a given image.", Default = false)]
+        [Option(longName: "centropy", HelpText = "Calculates the information source entropy characteristic of a given image.", Default = false)]
         public bool entropy { get; set; }
         [Option(longName: "sexdeti", Required = false, HelpText = "Applys the extraction of details I filter on the image", Default = false)]
         public bool sexdeti { get; set; }
