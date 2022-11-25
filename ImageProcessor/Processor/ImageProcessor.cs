@@ -1123,7 +1123,7 @@ namespace Processor
                 double histogramBSum = 0;
                 for (int j = 0; j < r[p]; j++)
                 {
-                    histogramSum += histogramR[j];
+                    histogramRSum += histogramR[j];
                 }
                 for (int j = 0; j < g[p]; j++)
                 {
