@@ -64,11 +64,11 @@ namespace Processor
         public bool variation2 { get; set; }
         [Option(longName: "centropy", HelpText = "Calculates the information source entropy characteristic of a given image.", Default = false)]
         public bool entropy { get; set; }
-        [Option(longName: "sexdeti", Required = false, HelpText = "Applys the extraction of details I filter on the image", Default = Mask.None)]
+        [Option(longName: "sexdeti", Required = false, HelpText = "Applies the extraction of details I filter on the image", Default = Mask.None)]
         public Mask sexdeti { get; set; }
-        [Option(longName: "sexdetio", Required = false, HelpText = "Applys the extraction of details I filter on the image", Default = false)]
+        [Option(longName: "sexdetio", Required = false, HelpText = "Applies the extraction of details I filter on the image", Default = false)]
         public bool sexdetio { get; set; }
-        [Option(longName: "orobertsii", Required = false, HelpText = "Applys the roberts operator II filter on the image", Default = false)]
+        [Option(longName: "orobertsii", Required = false, HelpText = "Applies the roberts operator II filter on the image", Default = false)]
         public bool robertsII { get; set; }
 
         public enum Channel
