@@ -1069,7 +1069,7 @@ namespace Processor
         {
             if(gMin < 0 || gMax > 255 || gMin > gMax)
             {
-                Console.WriteLine("Wrong input parameters. Check whether gmin is smaller than 0, or gmax higher than 255, or gmin higher than gmax");
+                Console.WriteLine("Wrong input parameters. Make sure that 0 <= gmin < gmax <= 255"); 
                 return;
             }
 
