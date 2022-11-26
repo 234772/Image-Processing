@@ -93,8 +93,8 @@ namespace Processor
                 Console.WriteLine(VariationCoefficientII(ih.Bmp));
             if (o.entropy)
                 Console.WriteLine(InformationSourceEntropy(ih.Bmp));
-            if (o.sexdeti)
-                ExtractionOfDetailsI(ih.Bmp, o.secondPath);
+            if (o.sexdeti == Mask.N || o.sexdeti == Mask.NE || o.sexdeti == Mask.E || o.sexdeti == Mask.SE)
+                ExtractionOfDetailsI(ih.Bmp, o.secondPath, o.sexdeti);
             if (o.robertsII)
                 RobertsII(ih.Bmp, o.secondPath);
             if (o.sexdetio)
@@ -1568,12 +1568,19 @@ namespace Processor
         /// </summary>
         /// <param name="image"></param>
         /// <param name="savePath"></param>
-        public static void ExtractionOfDetailsI(Bitmap image, string savePath)
+        public static void ExtractionOfDetailsI(Bitmap image, string savePath, Mask h)
         {
             int height = image.Height;
             int width = image.Width;
-
-            int[] hMask = new int[9] { 1, 1, 1, 1, -2, 1, -1, -1, -1 };
+            int[] hMask = new int[9];
+            if (h == Mask.N)
+                hMask = new int[9] { 1, 1, 1, 1, -2, 1, -1, -1, -1 };
+            if (h == Mask.NE)
+                hMask = new int[9] { 1, 1, 1, -1, -2, 1, -1, -1, 1 };
+            if (h == Mask.E)
+                hMask = new int[9] { -1, 1, 1, -1, -2, 1, -1, 1, 1 };
+            if (h == Mask.SE)
+                hMask = new int[9] { -1, -1, 1, -1, -2, 1, 1, 1, 1 };
 
             Bitmap res = new Bitmap(image.Width, image.Height);
 
@@ -1602,19 +1609,15 @@ namespace Processor
                         }
                     }
 
-                    int newR = 0;
-                    int newG = 0;
-                    int newB = 0;
+                    int newValue = 0;
 
                     for (int z = 0; z < 9; z++)
                     {
-                        newR += mask[z].R * hMask[z];
-                        newG += mask[z].G * hMask[z];
-                        newB += mask[z].B * hMask[z];
+                        newValue += mask[z].R * hMask[z];
                     }
 
                     //Assign the new value to the target pixel
-                    res.SetPixel(j, i, Color.FromArgb(Clamp(newR), Clamp(newG), Clamp(newB)));
+                    res.SetPixel(j, i, Color.FromArgb(Clamp(newValue), Clamp(newValue), Clamp(newValue)));
                 }
             }
             ih.saveImage(res, savePath);
