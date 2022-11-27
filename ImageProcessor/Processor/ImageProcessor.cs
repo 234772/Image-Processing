@@ -1585,14 +1585,10 @@ namespace Processor
             Bitmap res = new Bitmap(image.Width, image.Height);
 
             //Run through every pixel of the original image.
-            for (int i = 0; i < height; i++)
+            for (int i = 1; i < height - 1; i++)
             {
-                if (i == 0) continue;
-                if (i == height - 1) break;
-                for (int j = 0; j < width; j++)
-                {
-                    if (j == 0) continue;
-                    if (j == width - 1) break;
+                for (int j = 1; j < width - 1; j++)
+                {           
                     //Put a 3x3 mask on every pixel of the image.
                     int k = 0;
 
