@@ -1626,39 +1626,47 @@ namespace Processor
         {
             int height = image.Height;
             int width = image.Width;
+            int bytesPerPixel = 3;
 
-            Bitmap res = new Bitmap(image.Width, image.Height);
+            Bitmap resultBitmap = new Bitmap(width, height);
+            BitmapData resultBitmapData = resultBitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData bmpData = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            byte[] originalRGB = new byte[ bmpData.Stride* height];
+            byte[] resultRGB = new byte[resultBitmapData.Stride * height];
+            Marshal.Copy(bmpData.Scan0, originalRGB, 0, bmpData.Height * bmpData.Stride);
 
             //Run through every pixel of the original image.
-            for (int i = 0; i < height; i++)
+     
+            for (int i = 1; i < height - 1; i++)
             {
-                if (i == 0) continue;
-                if (i == height - 1) break;
-                for (int j = 0; j < width; j++)
+                for (int j = 1; j < width - 1; j++)
                 {
-                    if (j == 0) continue;
-                    if (j == width - 1) break;
-
                     int newR = 0;
+                    byte[] pixelsR = new byte[9];
+ 
+                    int k = 0;
+                    for (int x = i - 1; x < i + 1 + 1; x++)
+                    {
+                        for (int y = j - 1; y < j + 1 + 1; y++)
+                        {
+                            byte valueR;
+                            valueR = originalRGB[y * bytesPerPixel + x * bmpData.Stride + 2];
+                            pixelsR[k] = valueR;
+                            k++;
+                        }
+                    }
 
-                    Color[] pixelValues = new Color[9];
-
-                    pixelValues[0] = image.GetPixel(j - 1, i - 1);
-                    pixelValues[1] = image.GetPixel(j, i - 1);
-                    pixelValues[2] = image.GetPixel(j + 1, i - 1);
-                    pixelValues[3] = image.GetPixel(j - 1, i);
-                    pixelValues[4] = image.GetPixel(j, i);
-                    pixelValues[5] = image.GetPixel(j + 1, i);
-                    pixelValues[6] = image.GetPixel(j - 1, i + 1);
-                    pixelValues[7] = image.GetPixel(j, i + 1);
-                    pixelValues[8] = image.GetPixel(j + 1, i + 1);
-
-                    newR = pixelValues[0].R * 1 + pixelValues[1].R * 1 + pixelValues[2].R * 1 + pixelValues[3].R * 1 + pixelValues[4].R * (-2) + pixelValues[5].R * 1 + pixelValues[6].R * (-1) + pixelValues[7].R * (-1) + pixelValues[8].R * (-1);
-
-                    res.SetPixel(j, i, Color.FromArgb(Clamp(newR), Clamp(newR), Clamp(newR)));
+                    newR = pixelsR[0] * 1 + pixelsR[1] * 1 + pixelsR[2] * 1 + pixelsR[3] * 1 + pixelsR[4] * (-2) + pixelsR[5] * 1 + pixelsR[6] * (-1) + pixelsR[7] * (-1) + pixelsR[8] * (-1);
+                    resultRGB[j * bytesPerPixel + i * bmpData.Stride] = Clamp(newR);
+                    resultRGB[j * bytesPerPixel + i * bmpData.Stride + 1] = Clamp(newR);
+                    resultRGB[j * bytesPerPixel + i * bmpData.Stride + 2] = Clamp(newR);
                 }
             }
-            ih.saveImage(res, savePath);
+
+            Marshal.Copy(resultRGB, 0, resultBitmapData.Scan0, resultBitmapData.Stride * height);
+            resultBitmap.UnlockBits(resultBitmapData);
+            ih.saveImage(resultBitmap, savePath);
         }
         /// <summary>
         /// Applys the roberts filter on an image.
