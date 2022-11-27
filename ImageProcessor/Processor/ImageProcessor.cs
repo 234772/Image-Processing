@@ -1681,14 +1681,10 @@ namespace Processor
             byte newB;
 
             //Run through every pixel of the original image.
-            for (int i = 0; i < height; i++)
+            for (int i = 1; i < height - 1; i++)
             {
-                if (i == 0) continue;
-                if (i == height - 1) break;
-                for (int j = 0; j < width; j++)
+                for (int j = 1; j < width - 1; j++)
                 {
-                    if (j == 0) continue;
-                    if (j == width - 1) break;
                     newR = (byte)(Math.Abs(image.GetPixel(j, i).R - image.GetPixel(j + 1, i + 1).R) + Math.Abs(image.GetPixel(j, i + 1).R - image.GetPixel(j + 1, i ).R));
                     newG = (byte)(Math.Abs(image.GetPixel(j, i).G - image.GetPixel(j + 1, i + 1).G) + Math.Abs(image.GetPixel(j, i + 1).G - image.GetPixel(j + 1, i).G));
                     newB = (byte)(Math.Abs(image.GetPixel(j, i).B - image.GetPixel(j + 1, i + 1).B) + Math.Abs(image.GetPixel(j, i + 1).B - image.GetPixel(j + 1, i).B));
