@@ -1606,14 +1606,19 @@ namespace Processor
                     }
 
                     int newValue = 0;
+                    int newR = 0;
+                    int newG = 0;
+                    int newB = 0;
 
                     for (int z = 0; z < 9; z++)
                     {
-                        newValue += mask[z].R * hMask[z];
+                        newR += mask[z].R * hMask[z];
+                        newG += mask[z].G * hMask[z];
+                        newB += mask[z].B * hMask[z];
                     }
 
                     //Assign the new value to the target pixel
-                    res.SetPixel(j, i, Color.FromArgb(Clamp(newValue), Clamp(newValue), Clamp(newValue)));
+                    res.SetPixel(j, i, Color.FromArgb(Clamp(newR), Clamp(newR), Clamp(newR)));
                 }
             }
             ih.saveImage(res, savePath);
@@ -1689,7 +1694,7 @@ namespace Processor
                     newG = (byte)(Math.Abs(image.GetPixel(j, i).G - image.GetPixel(j + 1, i + 1).G) + Math.Abs(image.GetPixel(j, i + 1).G - image.GetPixel(j + 1, i).G));
                     newB = (byte)(Math.Abs(image.GetPixel(j, i).B - image.GetPixel(j + 1, i + 1).B) + Math.Abs(image.GetPixel(j, i + 1).B - image.GetPixel(j + 1, i).B));
 
-                    res.SetPixel(j, i, Color.FromArgb(newR, newG, newB));
+                    res.SetPixel(j, i, Color.FromArgb(newG, newG, newG));
                 }
             }
             ih.saveImage(res, savePath);
