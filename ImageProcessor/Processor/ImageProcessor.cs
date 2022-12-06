@@ -1671,7 +1671,7 @@ namespace Processor
             ih.saveImage(resultBitmap, savePath);
         }
         /// <summary>
-        /// Applys the roberts filter on an image.
+        /// Applies the roberts filter on an image.
         /// </summary>
         /// <param name="image"></param>
         /// <param name="savePath"></param>
@@ -1700,6 +1700,13 @@ namespace Processor
             }
             ih.saveImage(res, savePath);
         }
+        /// <summary>
+        /// Performs the morphological operation of dilation on the image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="kernelNumber"></param>
+        /// <returns></returns>
         public static Bitmap Dilation(Bitmap image, string savePath, int kernelNumber)
         {
             Bitmap res = new Bitmap(image);
