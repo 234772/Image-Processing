@@ -104,6 +104,10 @@ namespace Processor
                 Dilation(ih.Bmp, o.secondPath, o.dilationKernel);
             if (o.erosionKernel != 0)
                 Erosion(ih.Bmp, o.secondPath, o.erosionKernel);
+            if (o.openingKernel != 0)
+                Opening(ih.Bmp, o.secondPath, o.openingKernel);
+            if(o.closingKernel != 0)
+                Closing(ih.Bmp, o.secondPath, o.closingKernel);
 
         }
         /// <summary>
@@ -1741,8 +1745,10 @@ namespace Processor
                             {
                                 if (image.GetPixel(j + p - 1, i + o - 1).R == 0)
                                 {
+                                    if (image.GetPixel(j, i).R == 0) break;
                                     byte newColor = (byte)(image.GetPixel(j, i).R  - seed[1, 1] * 255);
                                     res.SetPixel(j, i, Color.FromArgb(newColor, newColor, newColor));
+                                    break;
                                 }
                             }
                         }
@@ -1762,6 +1768,7 @@ namespace Processor
         public static Bitmap Erosion(Bitmap image, string savePath, int kernelNumber)
         {
             Bitmap res = new Bitmap(image);
+
             Kernel kernel = new Kernel();
 
             int[,] seed = kernel.GetKernel(kernelNumber);
@@ -1796,7 +1803,7 @@ namespace Processor
                         if(k > z)
                         {
                             byte oldColor = image.GetPixel(j, i).R;
-                            byte newColor = (byte)(oldColor - seed[1, 1] * 255);
+                            byte newColor = (byte)(oldColor + seed[1, 1] * 255);
                             res.SetPixel(j, i, Color.FromArgb(newColor, newColor, newColor));
                         }
                     }
@@ -1804,6 +1811,34 @@ namespace Processor
             }
             ih.saveImage(res, savePath);
             return res;
+        }
+        /// <summary>
+        /// Performs the morphological operation of opening on the image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="kernelNumber"></param>
+        public static void Opening(Bitmap image, string savePath, int kernelNumber)
+        {
+            Bitmap res = new Bitmap(image);
+
+            res = Dilation(Erosion(res, savePath, kernelNumber), savePath, kernelNumber);
+
+            ih.saveImage(res, savePath);
+        }
+        /// <summary>
+        /// Performs the morphological operation of closing on the image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="kernelNumber"></param>
+        public static void Closing(Bitmap image, string savePath, int kernelNumber)
+        {
+            Bitmap res = new Bitmap(image);
+
+            res = Erosion(Dilation(res, savePath, kernelNumber), savePath, kernelNumber);
+
+            ih.saveImage(res, savePath);
         }
     }
 }

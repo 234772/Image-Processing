@@ -74,6 +74,10 @@ namespace Processor
         public int dilationKernel { get; set; }
         [Option(longName: "erosion", Required = false, HelpText = "Performs the morphological operation of erosion on the image.", Default = 0)]
         public int erosionKernel { get; set; }
+        [Option(longName: "opening", Required = false, HelpText = "Performs the morphological operation of opening on the image.", Default = 0)]
+        public int openingKernel { get; set; }
+        [Option(longName: "closing", Required = false, HelpText = "Performs the morphological operation of closing on the image.", Default = 0)]
+        public int closingKernel { get; set; }
 
         public enum Channel
         {
