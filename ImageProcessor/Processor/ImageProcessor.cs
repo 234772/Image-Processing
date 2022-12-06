@@ -1501,6 +1501,11 @@ namespace Processor
 
             return variation;
         }
+        /// <summary>
+        /// Calculates the information source entropy characteristic of a given image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <returns></returns>
         public static double InformationSourceEntropy(Bitmap image)
         {
             double entropy;
@@ -1566,7 +1571,7 @@ namespace Processor
             return entropy;
         }
         /// <summary>
-        /// Applys the extraction of details filter on an image.
+        /// Applies the extraction of details filter on an image.
         /// </summary>
         /// <param name="image"></param>
         /// <param name="savePath"></param>
