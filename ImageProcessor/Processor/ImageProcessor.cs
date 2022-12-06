@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.OleDb;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
@@ -1778,21 +1779,25 @@ namespace Processor
                     if (j == width - 1) continue;
                     if (image.GetPixel(j, i).R == 0)
                     {
+                        int k = 0;
+                        int z = 0;
                         for (int o = 0; o < 3; o++)
                         {
                             for (int p = 0; p < 3; p++)
                             {
-                                if (seed[o, p] == 1)
+                                if (seed[o, p] != 0)
                                 {
-                                    byte oldColor = image.GetPixel(j + p - 1, i + o - 1).R;
-                                    byte newColor = (byte)(oldColor + seed[o, p] * 255);
-                                    res.SetPixel(j + p - 1, i + o - 1, Color.FromArgb(newColor, newColor, newColor));
-                                }
-                                else if (seed[o, p] == -1)
-                                {
-                                    res.SetPixel(j + p - 1, i + o - 1, Color.FromArgb(255, 255, 255));
+                                    k++;
+                                    if (image.GetPixel(j + p - 1, i + o - 1).R == 0)
+                                        z++;
                                 }
                             }
+                        }
+                        if(k > z)
+                        {
+                            byte oldColor = image.GetPixel(j, i).R;
+                            byte newColor = (byte)(oldColor - seed[1, 1] * 255);
+                            res.SetPixel(j, i, Color.FromArgb(newColor, newColor, newColor));
                         }
                     }
                 }
