@@ -51,6 +51,7 @@
     <Compile Include="IImageHandler.cs" />
     <Compile Include="ImageHandler.cs" />
     <Compile Include="ImageProcessor.cs" />
+    <Compile Include="Kernel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

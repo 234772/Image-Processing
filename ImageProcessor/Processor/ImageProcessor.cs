@@ -36,8 +36,8 @@ namespace Processor
             }
             if (o.brightness != 0)
                 ChangeBrightness(ih.Bmp, o.secondPath, o.brightness);
-            if (o.contrast !=0)
-                ChangeContrast(ih.Bmp, o.secondPath,o.contrast);
+            if (o.contrast != 0)
+                ChangeContrast(ih.Bmp, o.secondPath, o.contrast);
             if (o.negative)
                 NegativeImage(ih.Bmp, o.secondPath);
             if (o.Dimensions.Count() > 0)
@@ -72,7 +72,7 @@ namespace Processor
                 Console.WriteLine(PeakSignalToNoiseRatio(o.firstPath, o.secondPath));
             if (o.channel == Channel.Red || o.channel == Channel.Blue || o.channel == Channel.Green)
                 HistogramImage(ih.Bmp, o.secondPath, o.channel);
-            if(o.gs.Any())
+            if (o.gs.Any())
             {
                 List<double> gs = new List<double>(o.gs);
                 PowerFinalProbabilityDensityFunction(ih.Bmp, o.secondPath, gs[0], gs[1]);
@@ -99,9 +99,9 @@ namespace Processor
                 RobertsII(ih.Bmp, o.secondPath);
             if (o.sexdetio)
                 ExtractionOfDetailsIOptimized(ih.Bmp, o.secondPath);
-            if (o.dilation)
-                Dilation(ih.Bmp, o.secondPath);
-                
+            if (o.dilationKernel != 0)
+                Dilation(ih.Bmp, o.secondPath, o.dilationKernel);
+
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -256,7 +256,7 @@ namespace Processor
                     byte c4B = originalRGB[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel];
                     byte c4G = originalRGB[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 1];
                     byte c4R = originalRGB[ceil_y * bmpData.Stride + ceil_x * bytesPerPixel + 2];
-                                 
+
                     // Blue
                     b1 = (byte)(one_minus_x * c1B + fraction_x * c2B);
                     b2 = (byte)(one_minus_x * c3B + fraction_x * c4B);
@@ -482,7 +482,7 @@ namespace Processor
             Bitmap res = new Bitmap(image.Width + 2, image.Height + 2);
 
             //Copy row zero of original image, to row zero of buffer image, last row to last row, etc.
-            for(int i = 1; i <= image.Height; i++)
+            for (int i = 1; i <= image.Height; i++)
             {
                 for (int j = 1; j <= image.Width; j++)
                 {
@@ -523,7 +523,7 @@ namespace Processor
             if (m % 2 == 0) m++;
             if (n % 2 == 0) n++;
 
-            if(alpha > (m * n) / 2)
+            if (alpha > (m * n) / 2)
             {
                 Console.WriteLine("Alpha cannot be bigger than m*n/2");
                 return;
@@ -539,7 +539,7 @@ namespace Processor
             Bitmap buffer = ExtendBitmapByOne(image);
 
             //Run through every pixel of the original image(not buffer)
-            for(int i = 1; i < buffer.Height - 1; i++)
+            for (int i = 1; i < buffer.Height - 1; i++)
             {
                 for (int j = 1; j < buffer.Width - 1; j++)
                 {
@@ -663,7 +663,7 @@ namespace Processor
                     double productB = maskB[0].B;
 
                     //Multiply every element of every array. We start at x=1, because we've previously assigned the first value of the array to product.
-                    for(int x = 1; x < maskR.Length; x++)
+                    for (int x = 1; x < maskR.Length; x++)
                     {
                         productR *= maskR[x].R;
                         productG *= maskG[x].G;
@@ -705,7 +705,7 @@ namespace Processor
             int mse;
 
             //As the red, green and blue values are independent of each other, we can calculate their sum of squares, at the same time.
-            Task<double> taskR= Task<double>.Factory.StartNew(() =>
+            Task<double> taskR = Task<double>.Factory.StartNew(() =>
             {
                 double sumOfSquaresR = 0;
                 for (int x = 0; x < height * bmpData1.Stride - 2; x += 3)
@@ -819,7 +819,7 @@ namespace Processor
             double pmse;
 
             //Run through every value of pixels 1 and 2 arrays.
-            for(int x = 0; x < height * bmpData1.Stride - 2; x += 3)
+            for (int x = 0; x < height * bmpData1.Stride - 2; x += 3)
             {
 
                 byte pixel1R = pixels1[x];
@@ -976,16 +976,16 @@ namespace Processor
         {
             int chosenChannel = 0;
 
-            if(channel == Channel.Red)
+            if (channel == Channel.Red)
                 chosenChannel = 2;
-            else if(channel == Channel.Green)
+            else if (channel == Channel.Green)
                 chosenChannel = 1;
-            else if(channel == Channel.Blue)
+            else if (channel == Channel.Blue)
                 chosenChannel = 0;
 
 
             int width = image.Width;
-            int height = image.Height; 
+            int height = image.Height;
 
             BitmapData bmpData = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
@@ -1003,13 +1003,13 @@ namespace Processor
 
             //Separate the desired rgb channel
             int k = 0;
-            for (int i = 0; i < bytes; i+=3)
+            for (int i = 0; i < bytes; i += 3)
             {
                 chosenChannelValues[k++] = rgbValues[i + chosenChannel];
             }
 
             //Create a histogram for the desired channel
-            for(int i = 0; i < height * width; i++)
+            for (int i = 0; i < height * width; i++)
             {
                 histogram[chosenChannelValues[i]]++;
             }
@@ -1033,7 +1033,7 @@ namespace Processor
             Marshal.Copy(bmpData2.Scan0, histogramValues, 0, bytes2);
 
             //Set the bitmap to be white
-            for(int i = 0; i < bytes2; i++)
+            for (int i = 0; i < bytes2; i++)
             {
                 histogramValues[i] = 255;
             }
@@ -1041,9 +1041,9 @@ namespace Processor
             //Draw the histogram
             int d = output.Height * bmpData2.Stride - bmpData2.Stride;
             int p = 0;
-            for(int i = d; i < bytes2; i+=6)
+            for (int i = d; i < bytes2; i += 6)
             {
-                for(int j = 0; j < histogram[p]; j++)
+                for (int j = 0; j < histogram[p]; j++)
                 {
                     histogramValues[i - j * bmpData2.Stride] = 0;
                     histogramValues[i - j * bmpData2.Stride + 1] = 0;
@@ -1069,9 +1069,9 @@ namespace Processor
         /// <param name="gMax"></param>
         private static void PowerFinalProbabilityDensityFunction(Bitmap image, string savePath, double gMin, double gMax)
         {
-            if(gMin < 0 || gMax > 255 || gMin > gMax)
+            if (gMin < 0 || gMax > 255 || gMin > gMax)
             {
-                Console.WriteLine("Wrong input parameters. Make sure that 0 <= gmin < gmax <= 255"); 
+                Console.WriteLine("Wrong input parameters. Make sure that 0 <= gmin < gmax <= 255");
                 return;
             }
 
@@ -1118,7 +1118,7 @@ namespace Processor
 
             double divider = 1.0 / 3.0;
             int p = 0;
-            for(int i = 0; i < bytes; i+=3)
+            for (int i = 0; i < bytes; i += 3)
             {
                 double histogramRSum = 0;
                 double histogramGSum = 0;
@@ -1201,7 +1201,7 @@ namespace Processor
             double histogramBSum = 0;
             for (int i = 0; i < 256; i++)
             {
-                histogramRSum +=  i * histogramR[i];
+                histogramRSum += i * histogramR[i];
                 histogramGSum += i * histogramG[i];
                 histogramBSum += i * histogramB[i];
             }
@@ -1561,7 +1561,7 @@ namespace Processor
 
             double histogramSum = (histogramRSum + histogramGSum + histogramBSum) / 3.0;
 
-            entropy = - (1.0 / numOfPixels) * histogramSum;
+            entropy = -(1.0 / numOfPixels) * histogramSum;
 
             return entropy;
         }
@@ -1590,7 +1590,7 @@ namespace Processor
             for (int i = 1; i < height - 1; i++)
             {
                 for (int j = 1; j < width - 1; j++)
-                {           
+                {
                     //Put a 3x3 mask on every pixel of the image.
                     int k = 0;
 
@@ -1634,19 +1634,19 @@ namespace Processor
             BitmapData resultBitmapData = resultBitmap.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
             BitmapData bmpData = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
-            byte[] originalRGB = new byte[ bmpData.Stride* height];
+            byte[] originalRGB = new byte[bmpData.Stride * height];
             byte[] resultRGB = new byte[resultBitmapData.Stride * height];
             Marshal.Copy(bmpData.Scan0, originalRGB, 0, bmpData.Height * bmpData.Stride);
 
             //Run through every pixel of the original image.
-     
+
             for (int i = 1; i < height - 1; i++)
             {
                 for (int j = 1; j < width - 1; j++)
                 {
                     int newR = 0;
                     byte[] pixelsR = new byte[9];
- 
+
                     int k = 0;
                     for (int x = i - 1; x < i + 1 + 1; x++)
                     {
@@ -1691,7 +1691,7 @@ namespace Processor
             {
                 for (int j = 1; j < width - 1; j++)
                 {
-                    newR = (byte)(Math.Abs(image.GetPixel(j, i).R - image.GetPixel(j + 1, i + 1).R) + Math.Abs(image.GetPixel(j, i + 1).R - image.GetPixel(j + 1, i ).R));
+                    newR = (byte)(Math.Abs(image.GetPixel(j, i).R - image.GetPixel(j + 1, i + 1).R) + Math.Abs(image.GetPixel(j, i + 1).R - image.GetPixel(j + 1, i).R));
                     newG = (byte)(Math.Abs(image.GetPixel(j, i).G - image.GetPixel(j + 1, i + 1).G) + Math.Abs(image.GetPixel(j, i + 1).G - image.GetPixel(j + 1, i).G));
                     newB = (byte)(Math.Abs(image.GetPixel(j, i).B - image.GetPixel(j + 1, i + 1).B) + Math.Abs(image.GetPixel(j, i + 1).B - image.GetPixel(j + 1, i).B));
 
@@ -1700,25 +1700,38 @@ namespace Processor
             }
             ih.saveImage(res, savePath);
         }
-        public static Bitmap Dilation(Bitmap image, string savePath)
+        public static Bitmap Dilation(Bitmap image, string savePath, int kernelNumber)
         {
             Bitmap res = new Bitmap(image);
+            Kernel kernel = new Kernel();
+
+            int[,] seed = kernel.GetKernel(kernelNumber);
 
             int width = image.Width;
             int height = image.Height;
 
-            for(int i = 0; i < height; i++)
+            for (int i = 0; i < height; i++)
             {
                 if (i == 0) continue;
                 if (i == height - 1) continue;
-                for(int j = 0; j < width; j++)
+                for (int j = 0; j < width; j++)
                 {
                     if (j == 0) continue;
                     if (j == width - 1) continue;
-                    if(image.GetPixel(i, j).R == 0)
+                    if (image.GetPixel(j, i).R == 0)
                     {
-                        if (image.GetPixel(i, j - 1).R == 255)
-                                res.SetPixel(i, j - 1, Color.FromArgb(0, 0, 0));
+                        for (int o = 0; o < 3; o++)
+                        {
+                            for (int p = 0; p < 3; p++)
+                            {
+                                if (seed[o, p] != 0)
+                                {
+                                    byte oldColor = image.GetPixel(j + p - 1, i + o - 1).R;
+                                    byte newColor = (byte)(oldColor - seed[o, p] * 255);
+                                    res.SetPixel(j + p - 1, i + o - 1, Color.FromArgb(newColor, newColor, newColor));
+                                }
+                            }
+                        }
                     }
                 }
             }
