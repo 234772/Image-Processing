@@ -101,6 +101,8 @@ namespace Processor
                 ExtractionOfDetailsIOptimized(ih.Bmp, o.secondPath);
             if (o.dilationKernel != 0)
                 Dilation(ih.Bmp, o.secondPath, o.dilationKernel);
+            if (o.erosionKernel != 0)
+                Erosion(ih.Bmp, o.secondPath, o.erosionKernel);
 
         }
         /// <summary>
@@ -1730,17 +1732,65 @@ namespace Processor
                 {
                     if (j == 0) continue;
                     if (j == width - 1) continue;
+                    for (int o = 0; o < 3; o++)
+                    {
+                        for (int p = 0; p < 3; p++)
+                        {
+                            if (seed[o, p] != 0)
+                            {
+                                if (image.GetPixel(j + p - 1, i + o - 1).R == 0)
+                                {
+                                    byte newColor = (byte)(image.GetPixel(j, i).R  - seed[1, 1] * 255);
+                                    res.SetPixel(j, i, Color.FromArgb(newColor, newColor, newColor));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            ih.saveImage(res, savePath);
+            return res;
+        }
+        /// <summary>
+        /// Performs the morphological operation of erosion on the image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="kernelNumber"></param>
+        /// <returns></returns>
+        public static Bitmap Erosion(Bitmap image, string savePath, int kernelNumber)
+        {
+            Bitmap res = new Bitmap(image);
+            Kernel kernel = new Kernel();
+
+            int[,] seed = kernel.GetKernel(kernelNumber);
+
+            int width = image.Width;
+            int height = image.Height;
+
+            for (int i = 0; i < height; i++)
+            {
+                if (i == 0) continue;
+                if (i == height - 1) continue;
+                for (int j = 0; j < width; j++)
+                {
+                    if (j == 0) continue;
+                    if (j == width - 1) continue;
                     if (image.GetPixel(j, i).R == 0)
                     {
                         for (int o = 0; o < 3; o++)
                         {
                             for (int p = 0; p < 3; p++)
                             {
-                                if (seed[o, p] != 0)
+                                if (seed[o, p] == 1)
                                 {
                                     byte oldColor = image.GetPixel(j + p - 1, i + o - 1).R;
-                                    byte newColor = (byte)(oldColor - seed[o, p] * 255);
+                                    byte newColor = (byte)(oldColor + seed[o, p] * 255);
                                     res.SetPixel(j + p - 1, i + o - 1, Color.FromArgb(newColor, newColor, newColor));
+                                }
+                                else if (seed[o, p] == -1)
+                                {
+                                    res.SetPixel(j + p - 1, i + o - 1, Color.FromArgb(255, 255, 255));
                                 }
                             }
                         }

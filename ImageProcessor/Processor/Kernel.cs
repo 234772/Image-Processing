@@ -21,16 +21,16 @@ namespace Processor
 
         public Kernel()
         {
-            kernel1 = new int[,] { { 0, 0, 0 }, { 0, 0, 1 }, { 0, 0, 0 } };
-            kernel2 = new int[,] { { 0, 0, 0 }, { 0, 0, 0 }, { 0, 1, 0 } };
-            kernel3 = new int[,] { { 1, 1, 1 }, { 1, 0, 1 }, { 1, 1, 1 } };
-            kernel4 = new int[,] { { 0, 1, 0 }, { 1, 0, 1 }, { 0, 1, 0 } };
-            kernel5 = new int[,] { { 0, 0, 0 }, { 0, 0, 1 }, { 0, 1, 0 } };
+            kernel1 = new int[,] { { 0, 0, 0 }, { 0, 1, 1 }, { 0, 0, 0 } };
+            kernel2 = new int[,] { { 0, 0, 0 }, { 0, 1, 0 }, { 0, 1, 0 } };
+            kernel3 = new int[,] { { 1, 1, 1 }, { 1, 1, 1 }, { 1, 1, 1 } };
+            kernel4 = new int[,] { { 0, 1, 0 }, { 1, 1, 1 }, { 0, 1, 0 } };
+            kernel5 = new int[,] { { 0, 0, 0 }, { 0, 1, 1 }, { 0, 1, 0 } };
             kernel6 = new int[,] { { 0, 0, 0 }, { 0, -1, 1 }, { 0, 1, 0 } };
-            kernel7 = new int[,] { { 0, 0, 0 }, { 1, 0, 1 }, { 0, 0, 0 } };
+            kernel7 = new int[,] { { 0, 0, 0 }, { 1, 1, 1 }, { 0, 0, 0 } };
             kernel8 = new int[,] { { 0, 0, 0 }, { 1, -1, 1 }, { 0, 0, 0 } };
-            kernel9 = new int[,] { { 0, 0, 0 }, { 1, 0, 0 }, { 1, 0, 0 } };
-            kernel10 = new int[,] { { 0, 1, 1 }, { 0, 0, 0 }, { 0, 0, 0 } };
+            kernel9 = new int[,] { { 0, 0, 0 }, { 1, 1, 0 }, { 1, 0, 0 } };
+            kernel10 = new int[,] { { 0, 1, 1 }, { 0, 1, 0 }, { 0, 0, 0 } };
         }
 
         public int[,] GetKernel(int number)
