@@ -99,6 +99,8 @@ namespace Processor
                 RobertsII(ih.Bmp, o.secondPath);
             if (o.sexdetio)
                 ExtractionOfDetailsIOptimized(ih.Bmp, o.secondPath);
+            if (o.dilation)
+                Dilation(ih.Bmp, o.secondPath);
                 
         }
         /// <summary>
@@ -1605,7 +1607,6 @@ namespace Processor
                         }
                     }
 
-                    int newValue = 0;
                     int newR = 0;
                     int newG = 0;
                     int newB = 0;
@@ -1698,6 +1699,31 @@ namespace Processor
                 }
             }
             ih.saveImage(res, savePath);
+        }
+        public static Bitmap Dilation(Bitmap image, string savePath)
+        {
+            Bitmap res = new Bitmap(image);
+
+            int width = image.Width;
+            int height = image.Height;
+
+            for(int i = 0; i < height; i++)
+            {
+                if (i == 0) continue;
+                if (i == height - 1) continue;
+                for(int j = 0; j < width; j++)
+                {
+                    if (j == 0) continue;
+                    if (j == width - 1) continue;
+                    if(image.GetPixel(i, j).R == 0)
+                    {
+                        if (image.GetPixel(i, j - 1).R == 255)
+                                res.SetPixel(i, j - 1, Color.FromArgb(0, 0, 0));
+                    }
+                }
+            }
+            ih.saveImage(res, savePath);
+            return res;
         }
     }
 }

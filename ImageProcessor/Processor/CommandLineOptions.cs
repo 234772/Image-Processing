@@ -70,6 +70,8 @@ namespace Processor
         public bool sexdetio { get; set; }
         [Option(longName: "orobertsii", Required = false, HelpText = "Applies the roberts operator II filter on the image", Default = false)]
         public bool robertsII { get; set; }
+        [Option(longName: "dilation", Required = false, HelpText = "Performs the morphological operation of dilation on the image", Default = false)]
+        public bool dilation { get; set; }
 
         public enum Channel
         {
