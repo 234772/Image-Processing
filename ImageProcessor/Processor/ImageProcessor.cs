@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using static Processor.CommandLineOptions;
+using static System.Net.Mime.MediaTypeNames;
 
 namespace Processor
 {
@@ -1731,12 +1732,41 @@ namespace Processor
             Bitmap res = new Bitmap(image);
             Kernel kernel = new Kernel();
 
-            int[,] seed = kernel.GetKernel(kernelNumber);
-
             int width = image.Width;
             int height = image.Height;
 
-            for (int i = 0; i < height; i++)
+            BitmapData bmpData1 = image.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData bmpData2 = res.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            int bytes = height * bmpData1.Stride;
+
+            byte[] pixels1 = new byte[bytes];
+            byte[] pixels2 = new byte[bytes];
+
+            Marshal.Copy(bmpData1.Scan0, pixels1, 0, height * bmpData1.Stride);
+            Marshal.Copy(bmpData2.Scan0, pixels2, 0, height * bmpData1.Stride);
+
+            byte[,] values1 = new byte[512, 512];
+            byte[,] values2 = new byte[512, 512];
+
+            int k = 0;
+            int z = 0;
+            for(int i = 0; i < bytes; i+=3)
+            {
+                //Console.WriteLine(k + " " + z);
+                values1[k, z] = pixels1[i];
+                values2[k, z++] = pixels2[i];
+                if (z == 512)
+                {
+                    if (k != 512)
+                        k++;
+                    z = 0;
+                }
+            }
+
+            int[,] seed = kernel.GetKernel(kernelNumber);
+
+            for(int i = 0; i < height; i++)
             {
                 if (i == 0) continue;
                 if (i == height - 1) continue;
@@ -1750,11 +1780,12 @@ namespace Processor
                         {
                             if (seed[o, p] != 0)
                             {
-                                if (image.GetPixel(j + p - 1, i + o - 1).R == 0)
+                                if (values1[j + p - 1, i + o - 1] == 0)
                                 {
-                                    if (image.GetPixel(j, i).R == 0) break;
-                                    byte newColor = (byte)(image.GetPixel(j, i).R  - seed[1, 1] * 255);
-                                    res.SetPixel(j, i, Color.FromArgb(newColor, newColor, newColor));
+                                    if (values1[j, i] == 0) break;
+                                    byte newColor = (byte)(values1[j, i] - seed[1, 1] * 255);
+                                    values2[j, i] = newColor;
+                                    //res.SetPixel(j, i, Color.FromArgb(newColor, newColor, newColor));
                                     break;
                                 }
                             }
@@ -1762,6 +1793,53 @@ namespace Processor
                     }
                 }
             }
+
+            int q = 0;
+            int w = 0;
+            for(int i = 0; i < bytes; i+=3)
+            {
+                pixels2[i] = values2[q, w];
+                pixels2[i + 1] = values2[q, w];
+                pixels2[i + 2] = values2[q, w++];
+
+                if (w == 512)
+                {
+                    if (q != 512)
+                        q++;
+                    w = 0;
+                }
+            }
+
+            //for (int i = 0; i < height; i++)
+            //{
+            //    if (i == 0) continue;
+            //    if (i == height - 1) continue;
+            //    for (int j = 0; j < width; j++)
+            //    {
+            //        if (j == 0) continue;
+            //        if (j == width - 1) continue;
+            //        for (int o = 0; o < 3; o++)
+            //        {
+            //            for (int p = 0; p < 3; p++)
+            //            {
+            //                if (seed[o, p] != 0)
+            //                {
+            //                    if (image.GetPixel(j + p - 1, i + o - 1).R == 0)
+            //                    {
+            //                        if (image.GetPixel(j, i).R == 0) break;
+            //                        byte newColor = (byte)(image.GetPixel(j, i).R  - seed[1, 1] * 255);
+            //                        res.SetPixel(j, i, Color.FromArgb(newColor, newColor, newColor));
+            //                        break;
+            //                    }
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
+            Marshal.Copy(pixels2, 0, bmpData2.Scan0, bytes);
+            image.UnlockBits(bmpData1);
+            res.UnlockBits(bmpData2);
+
             ih.saveImage(res, savePath);
             return res;
         }
@@ -1925,33 +2003,75 @@ namespace Processor
             int height = image1.Height;
             Bitmap res = new Bitmap(width, height);
 
-            for(int i = 0; i < height; i++)
-            {
-                for(int j = 0; j < width; j++)
-                {
-                    var image1Color = image1.GetPixel(j, i).R;
-                    var image2Color = image2.GetPixel(j, i).R;
+            BitmapData bmpData1 = image1.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData bmpData2 = image2.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData bmpData3 = res.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
 
-                    if (image1Color == image2Color)
-                        res.SetPixel(j, i, Color.FromArgb(image1Color, image1Color, image1Color));
-                    else
-                        res.SetPixel(j, i, Color.FromArgb(255, 255, 255));
-                }
+            int bytes = height * bmpData1.Stride;
+            byte[] pixels1 = new byte[bytes];
+            byte[] pixels2 = new byte[bytes];
+            byte[] pixels3 = new byte[bytes];
+
+            Marshal.Copy(bmpData1.Scan0, pixels1, 0, bytes);
+            Marshal.Copy(bmpData2.Scan0, pixels2, 0, bytes);
+            Marshal.Copy(bmpData3.Scan0, pixels3, 0, bytes);
+
+            for (int i = 0; i < bytes; i++)
+            {
+                if (pixels1[i] == pixels2[i])
+                    pixels3[i] = pixels1[i];
+                else
+                    pixels3[i] = 255;
             }
+
+            //for (int i = 0; i < height; i++)
+            //{
+            //    for(int j = 0; j < width; j++)
+            //    {
+            //        var image1Color = image1.GetPixel(j, i).R;
+            //        var image2Color = image2.GetPixel(j, i).R;
+
+            //        if (image1Color == image2Color)
+            //            res.SetPixel(j, i, Color.FromArgb(image1Color, image1Color, image1Color));
+            //        else
+            //            res.SetPixel(j, i, Color.FromArgb(255, 255, 255));
+            //    }
+            //}
+            Marshal.Copy(pixels3, 0, bmpData3.Scan0, bytes);
+            image1.UnlockBits(bmpData1);
+            image2.UnlockBits(bmpData2);
+            res.UnlockBits(bmpData3);
+
             ih.saveImage(res, savePath);
 
             return res;
         }
         public static bool CheckIfSame(Bitmap image1, Bitmap image2)
         {
-            for(int i = 0; i < image1.Height; i++)
+            int height = image1.Height;
+            int width = image1.Width;
+
+            BitmapData bmpData1 = image1.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            BitmapData bmpData2 = image2.LockBits(new Rectangle(0, 0, width, height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+
+            int bytes = height * bmpData1.Stride;
+            byte[] pixels1 = new byte[bytes];
+            byte[] pixels2 = new byte[bytes];
+
+            Marshal.Copy(bmpData1.Scan0, pixels1, 0, bytes);
+            Marshal.Copy(bmpData2.Scan0, pixels2, 0, bytes);
+
+            for(int i = 0; i < bytes; i++)
             {
-                for(int j = 0; j < image1.Width; j++)
+                if (pixels1[i] != pixels2[i])
                 {
-                    if (image1.GetPixel(j, i) != image2.GetPixel(j, i))
-                        return false;
+                    image1.UnlockBits(bmpData1);
+                    image2.UnlockBits(bmpData2);
+                    return false;
                 }
             }
+            image1.UnlockBits(bmpData1);
+            image2.UnlockBits(bmpData2);
             return true;
         }
         /// <summary>
@@ -1983,27 +2103,7 @@ namespace Processor
             {
                 Console.WriteLine("Iteration: " + iteration++);
                 oldRes = res;
-                res = Intersection(Dilation(res, savePath, kernelNumber), image, savePath);
-                if(iteration == 100)
-                {
-                    ih.saveImage(oldRes, "1.bmp");
-                    ih.saveImage(res, "2.bmp");
-                }
-                if (iteration == 300)
-                {
-                    ih.saveImage(oldRes, "3.bmp");
-                    ih.saveImage(res, "4.bmp");
-                }
-                if (iteration == 600)
-                {
-                    ih.saveImage(oldRes, "5.bmp");
-                    ih.saveImage(res, "6.bmp");
-                }
-                if (iteration == 1000)
-                {
-                    ih.saveImage(oldRes, "7.bmp");
-                    ih.saveImage(res, "8.bmp");
-                }
+                res = Intersection(Dilation(oldRes, savePath, kernelNumber), image, savePath);
 
             } while (!CheckIfSame(res, oldRes));
 
