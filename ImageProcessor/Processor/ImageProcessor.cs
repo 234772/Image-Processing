@@ -110,6 +110,11 @@ namespace Processor
                 Closing(ih.Bmp, o.secondPath, o.closingKernel);
             if (o.hmtKernel != 0)
                 HMT(ih.Bmp, o.secondPath, o.hmtKernel);
+            if(o.m3.Any())
+            {
+                List<int> m3 = new List<int>(o.m3);
+                M3(ih.Bmp, o.secondPath, m3[0], m3[1], m3[2]);
+            }
 
         }
         /// <summary>
@@ -1842,6 +1847,12 @@ namespace Processor
 
             ih.saveImage(res, savePath);
         }
+        /// <summary>
+        /// Performs the morphological operation of hmt on the image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="kernelNumer"></param>
         public static void HMT(Bitmap image, string savePath, int kernelNumer)
         {
             Bitmap res = new Bitmap(image);
@@ -1898,6 +1909,103 @@ namespace Processor
                     }
                 }
             }
+
+            ih.saveImage(res, savePath);
+        }
+        /// <summary>
+        /// Generates the intersection of two images.
+        /// </summary>
+        /// <param name="firstImage"></param>
+        /// <param name="secondImage"></param>
+        /// <param name="savePath"></param>
+        /// <returns></returns>
+        public static Bitmap Intersection(Bitmap image1, Bitmap image2, string savePath)
+        {
+            int width = image1.Width;
+            int height = image1.Height;
+            Bitmap res = new Bitmap(width, height);
+
+            for(int i = 0; i < height; i++)
+            {
+                for(int j = 0; j < width; j++)
+                {
+                    var image1Color = image1.GetPixel(j, i).R;
+                    var image2Color = image2.GetPixel(j, i).R;
+
+                    if (image1Color == image2Color)
+                        res.SetPixel(j, i, Color.FromArgb(image1Color, image1Color, image1Color));
+                    else
+                        res.SetPixel(j, i, Color.FromArgb(255, 255, 255));
+                }
+            }
+            ih.saveImage(res, savePath);
+
+            return res;
+        }
+        public static bool CheckIfSame(Bitmap image1, Bitmap image2)
+        {
+            for(int i = 0; i < image1.Height; i++)
+            {
+                for(int j = 0; j < image1.Width; j++)
+                {
+                    if (image1.GetPixel(j, i) != image2.GetPixel(j, i))
+                        return false;
+                }
+            }
+            return true;
+        }
+        /// <summary>
+        /// Performs the morphological operation specified in the M3 point, on the image.
+        /// </summary>
+        /// <param name="image"></param>
+        /// <param name="savePath"></param>
+        /// <param name="kernelNumber"></param>
+        /// <param name="x"></param>
+        /// <param name="y"></param>
+        public static void M3(Bitmap image, string savePath, int kernelNumber, int x, int y)
+        {
+            int width = image.Width;
+            int height = image.Height;
+
+            Bitmap res = new Bitmap(image.Width, image.Height);
+            Bitmap oldRes;
+
+            for(int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                    res.SetPixel(j, i, Color.FromArgb(255, 255, 255));
+            }
+
+            res.SetPixel(x, y, Color.FromArgb(0, 0, 0));
+
+            int iteration = 0;
+            do
+            {
+                Console.WriteLine("Iteration: " + iteration++);
+                oldRes = res;
+                res = Intersection(Dilation(res, savePath, kernelNumber), image, savePath);
+                if(iteration == 100)
+                {
+                    ih.saveImage(oldRes, "1.bmp");
+                    ih.saveImage(res, "2.bmp");
+                }
+                if (iteration == 300)
+                {
+                    ih.saveImage(oldRes, "3.bmp");
+                    ih.saveImage(res, "4.bmp");
+                }
+                if (iteration == 600)
+                {
+                    ih.saveImage(oldRes, "5.bmp");
+                    ih.saveImage(res, "6.bmp");
+                }
+                if (iteration == 1000)
+                {
+                    ih.saveImage(oldRes, "7.bmp");
+                    ih.saveImage(res, "8.bmp");
+                }
+
+            } while (!CheckIfSame(res, oldRes));
 
             ih.saveImage(res, savePath);
         }
