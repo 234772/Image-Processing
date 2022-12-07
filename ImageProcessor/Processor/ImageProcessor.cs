@@ -1850,6 +1850,14 @@ namespace Processor
             int[,] seed = kernel.GetKernel(kernelNumer + 10);
             int width = image.Width;
             int height = image.Height;
+            byte kernelHelper = 0;
+
+            if (seed[1, 1] == -1)
+                kernelHelper = 255;
+            else if (seed[1, 1] == 1)
+                kernelHelper = 0;
+
+            Console.WriteLine(kernelHelper);
 
             for(int i = 0; i < height; i++)
             {
@@ -1859,7 +1867,7 @@ namespace Processor
                 {
                     if (j == 0) continue;
                     if (j == width - 1) continue;
-                    if (image.GetPixel(j, i).R == 0)
+                    if (image.GetPixel(j, i).R == kernelHelper)
                     {
                         int seedMatch = 0;
                         int mapMatch = 0;
@@ -1882,7 +1890,11 @@ namespace Processor
                             }
                         }
                         if (seedMatch != mapMatch)
-                            res.SetPixel(j, i, Color.FromArgb(255, 255, 255));
+                        {
+                            var oldColor = image.GetPixel(j, i).R;
+                            var newColor = (byte)(oldColor + seed[1, 1] * 255);
+                            res.SetPixel(j, i, Color.FromArgb(newColor, newColor, newColor));
+                        }
                     }
                 }
             }

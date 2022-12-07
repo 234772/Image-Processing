@@ -44,6 +44,17 @@ namespace Processor
             kernel9 = new int[,] { { 0, 0, 0 }, { 1, 1, 0 }, { 1, 0, 0 } };
             kernel10 = new int[,] { { 0, 1, 1 }, { 0, 1, 0 }, { 0, 0, 0 } };
             hmtKernel1 = new int[,] { { 1, 0, 0 }, { 1, -1, 0 }, { 1, 0, 0 } };
+            hmtKernel2 = new int[,] { { 1, 1, 1 }, { 0, -1, 0 }, { 0, 0, 0 } };
+            hmtKernel3 = new int[,] { { 0, 0, 1 }, { 0, -1, 1 }, { 0, 0, 1 } };
+            hmtKernel4 = new int[,] { { 1, 0, 0 }, { 1, -1, 0 }, { 1, 0, 0 } };
+            hmtKernel5 = new int[,] { { -1, -1, -1 }, { 0, 1, 0 }, { 1, 1, 1 } };
+            hmtKernel6 = new int[,] { { 0, 0, 0 }, { 1, 1, 0 }, { 1, 1, 0 } };
+            hmtKernel7 = new int[,] { { 1, 0, 0 }, { 1, 1, 0 }, { 1, 0, 0 } };
+            hmtKernel8 = new int[,] { { 1, 1, 0 }, { 1, 1, 0 }, { 0, 0, 0 } };
+            hmtKernel9 = new int[,] { { 1, 1, 1 }, { 0, 1, 0 }, { 0, 0, 0 } };
+            hmtKernel10 = new int[,] { { 0, 1, 1 }, { 0, 1, 1 }, { 0, 0, 0 } };
+            hmtKernel11 = new int[,] { { 0, 0, 1 }, { 0, 1, 1 }, { 0, 0, 1 } };
+            hmtKernel12 = new int[,] { { 0, 0, 0 }, { 0, 1, 1 }, { 0, 1, 1 } };
         }
 
         public int[,] GetKernel(int number)
@@ -72,8 +83,35 @@ namespace Processor
                     return kernel10;
                 case 11:
                     return hmtKernel1;
+                case 12:
+                    return hmtKernel2;
+                case 13:    
+                    return hmtKernel3;
+                case 14:
+                    return hmtKernel4;
+                case 15:
+                    return hmtKernel5;
+                case 16:
+                    return hmtKernel6;
+                case 17:
+                    return hmtKernel7;
+                case 18:
+                    return hmtKernel8;
+                case 19:
+                    return hmtKernel9;
+                case 20:
+                    return hmtKernel10;
+                case 21:
+                    return hmtKernel11;
+                case 22:
+                    return hmtKernel12;
+                default:
+                    {
+                        //TODO: Think of a better way to do this
+                        Console.WriteLine("No matching mask");
+                        return kernel1;
+                    }
             }
-            return kernel6;
         }
     }
 }
