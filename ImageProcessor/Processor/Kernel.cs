@@ -18,6 +18,18 @@ namespace Processor
         private int[,] kernel8;
         private int[,] kernel9;
         private int[,] kernel10;
+        private int[,] hmtKernel1;
+        private int[,] hmtKernel2;
+        private int[,] hmtKernel3;
+        private int[,] hmtKernel4;
+        private int[,] hmtKernel5;
+        private int[,] hmtKernel6;
+        private int[,] hmtKernel7;
+        private int[,] hmtKernel8;
+        private int[,] hmtKernel9;
+        private int[,] hmtKernel10;
+        private int[,] hmtKernel11;
+        private int[,] hmtKernel12;
 
         public Kernel()
         {
@@ -31,6 +43,7 @@ namespace Processor
             kernel8 = new int[,] { { 0, 0, 0 }, { 1, -1, 1 }, { 0, 0, 0 } };
             kernel9 = new int[,] { { 0, 0, 0 }, { 1, 1, 0 }, { 1, 0, 0 } };
             kernel10 = new int[,] { { 0, 1, 1 }, { 0, 1, 0 }, { 0, 0, 0 } };
+            hmtKernel1 = new int[,] { { 1, 0, 0 }, { 1, -1, 0 }, { 1, 0, 0 } };
         }
 
         public int[,] GetKernel(int number)
@@ -57,6 +70,8 @@ namespace Processor
                     return kernel9;
                 case 10:
                     return kernel10;
+                case 11:
+                    return hmtKernel1;
             }
             return kernel6;
         }

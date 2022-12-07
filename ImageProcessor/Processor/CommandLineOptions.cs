@@ -78,6 +78,8 @@ namespace Processor
         public int openingKernel { get; set; }
         [Option(longName: "closing", Required = false, HelpText = "Performs the morphological operation of closing on the image.", Default = 0)]
         public int closingKernel { get; set; }
+        [Option(longName: "hmt", Required = false, HelpText = "Performs the morphological operation of hmt on the image.", Default = 0)]
+        public int hmtKernel { get; set; }
 
         public enum Channel
         {

@@ -108,6 +108,8 @@ namespace Processor
                 Opening(ih.Bmp, o.secondPath, o.openingKernel);
             if(o.closingKernel != 0)
                 Closing(ih.Bmp, o.secondPath, o.closingKernel);
+            if (o.hmtKernel != 0)
+                HMT(ih.Bmp, o.secondPath, o.hmtKernel);
 
         }
         /// <summary>
@@ -1837,6 +1839,53 @@ namespace Processor
             Bitmap res = new Bitmap(image);
 
             res = Erosion(Dilation(res, savePath, kernelNumber), savePath, kernelNumber);
+
+            ih.saveImage(res, savePath);
+        }
+        public static void HMT(Bitmap image, string savePath, int kernelNumer)
+        {
+            Bitmap res = new Bitmap(image);
+            Kernel kernel = new Kernel();
+
+            int[,] seed = kernel.GetKernel(kernelNumer + 10);
+            int width = image.Width;
+            int height = image.Height;
+
+            for(int i = 0; i < height; i++)
+            {
+                if (i == 0) continue;
+                if (i == height - 1) continue;
+                for (int j = 0; j < width; j++)
+                {
+                    if (j == 0) continue;
+                    if (j == width - 1) continue;
+                    if (image.GetPixel(j, i).R == 0)
+                    {
+                        int seedMatch = 0;
+                        int mapMatch = 0;
+                        for (int o = 0; o < 3; o++)
+                        {
+                            for (int p = 0; p < 3; p++)
+                            {
+                                if(seed[o, p] == 1)
+                                {
+                                    seedMatch++;
+                                    if(image.GetPixel(j + p - 1, i + o - 1).R == 0)
+                                        mapMatch++;
+                                }
+                                if(seed[o, p] == -1)
+                                {
+                                    seedMatch++;
+                                    if (image.GetPixel(j + p - 1, i + o - 1).R == 255)
+                                        mapMatch++;
+                                }
+                            }
+                        }
+                        if (seedMatch != mapMatch)
+                            res.SetPixel(j, i, Color.FromArgb(255, 255, 255));
+                    }
+                }
+            }
 
             ih.saveImage(res, savePath);
         }
