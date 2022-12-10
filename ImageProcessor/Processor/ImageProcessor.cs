@@ -116,6 +116,8 @@ namespace Processor
                 List<int> m3 = new List<int>(o.m3);
                 M3(ih.Bmp, o.secondPath, m3[0], m3[1], m3[2]);
             }
+            if (o.region)
+                RegionGrowing(ih.Bmp, o.secondPath);
 
         }
         /// <summary>
@@ -2108,6 +2110,53 @@ namespace Processor
             } while (!CheckIfSame(res, oldRes));
 
             ih.saveImage(res, savePath);
+        }
+        public static int[,] GrowRegion8(Bitmap image, int seedX, int seedY, int threshold, byte seedValue)
+        {
+            int[,] region = new int[9, 2];
+
+            int k = 0;
+            int p = 0;
+
+            for(int i = -1; i < 2; i++)
+            {
+                if (seedY == 0) continue;
+                if (seedY == image.Height - 1) break;
+                for(int j = -1; j < 2; j++)
+                {
+                    if (seedX == 0) continue;
+                    if (seedX == image.Width - 1) break;
+                    Color color = image.GetPixel(seedX + j, seedY + i);
+                    if (Math.Abs(color.R - seedValue) < threshold)
+                    {
+                        region[k, 0] = seedX + j;
+                        region[k++, 1] = seedY + i;
+                    }
+                    else
+                    {
+                        region[k, 0] = 69;
+                        region[k++, 1] = 69;
+                    }
+                }
+            }
+
+            return region;
+        }
+        public static void RegionGrowing(Bitmap image, string savePath)
+        {
+            int[,] region;
+
+            region = GrowRegion8(image, 243, 232, 25, image.GetPixel(243, 232).R);
+
+            Console.WriteLine(region[0, 0] + " " + region[0, 1]);
+            Console.WriteLine(region[1, 0] + " " + region[1, 1]);
+            Console.WriteLine(region[2, 0] + " " + region[2, 1]);
+            Console.WriteLine(region[3, 0] + " " + region[3, 1]);
+            Console.WriteLine(region[4, 0] + " " + region[4, 1]);
+            Console.WriteLine(region[5, 0] + " " + region[5, 1]);
+            Console.WriteLine(region[6, 0] + " " + region[6, 1]);
+            Console.WriteLine(region[7, 0] + " " + region[7, 1]);
+            Console.WriteLine(region[8, 0] + " " + region[8, 1]);
         }
     }
 }
