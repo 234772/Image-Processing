@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using static Processor.CommandLineOptions;
 using static System.Net.Mime.MediaTypeNames;
@@ -2111,12 +2112,9 @@ namespace Processor
 
             ih.saveImage(res, savePath);
         }
-        public static int[,] GrowRegion8(Bitmap image, int seedX, int seedY, int threshold, byte seedValue)
+        public static List<int> GrowRegion8(Bitmap image, int seedX, int seedY, int threshold, byte seedValue, List<int> region)
         {
-            int[,] region = new int[9, 2];
-
-            int k = 0;
-            int p = 0;
+            List<int> localRegion = new List<int>();
 
             for(int i = -1; i < 2; i++)
             {
@@ -2125,38 +2123,57 @@ namespace Processor
                 for(int j = -1; j < 2; j++)
                 {
                     if (seedX == 0) continue;
+                    if (i == 0 && j == 0) continue;
                     if (seedX == image.Width - 1) break;
                     Color color = image.GetPixel(seedX + j, seedY + i);
-                    if (Math.Abs(color.R - seedValue) < threshold)
+                    if (Math.Abs(color.R - seedValue) < threshold && !IsDuplicate(region, seedX + j, seedY + i))
                     {
-                        region[k, 0] = seedX + j;
-                        region[k++, 1] = seedY + i;
-                    }
-                    else
-                    {
-                        region[k, 0] = 69;
-                        region[k++, 1] = 69;
+                        localRegion.Add(seedX + j);
+                        localRegion.Add(seedY + i);
                     }
                 }
             }
 
-            return region;
+            return localRegion;
+        }
+        public static bool IsDuplicate(List<int> list, int x, int y)
+        {
+           for(int i = 0; i < list.Count; i+=2)
+           {
+                if (list[i] == x && list[i + 1] == y)
+                    return true;
+           }
+
+            return false;
         }
         public static void RegionGrowing(Bitmap image, string savePath)
         {
-            int[,] region;
+            List<int> localRegion = new List<int>();
+            List<int> region = new List<int>();
+            region.Add(242);
+            region.Add(232);
+            int oldCount = 0;
+            //region = GrowRegion8(image, 243, 232, 25, image.GetPixel(243, 232).R);
 
-            region = GrowRegion8(image, 243, 232, 25, image.GetPixel(243, 232).R);
+            int x = 0;
+            while (true)
+            {
+                if (region.Count == oldCount)
+                    break;
+                oldCount = region.Count;
+                //Console.WriteLine(region[x] + " " + region[x + 1]);
+                //Thread.Sleep(3000);
+                localRegion = GrowRegion8(image, region[x], region[x + 1], 100, image.GetPixel(242, 232).R, region);
+               // Console.WriteLine(localRegion[0] + " " + localRegion[1]);
+                region.AddRange(localRegion);
+                localRegion.Clear();
+                x += 2;
+            }
 
-            Console.WriteLine(region[0, 0] + " " + region[0, 1]);
-            Console.WriteLine(region[1, 0] + " " + region[1, 1]);
-            Console.WriteLine(region[2, 0] + " " + region[2, 1]);
-            Console.WriteLine(region[3, 0] + " " + region[3, 1]);
-            Console.WriteLine(region[4, 0] + " " + region[4, 1]);
-            Console.WriteLine(region[5, 0] + " " + region[5, 1]);
-            Console.WriteLine(region[6, 0] + " " + region[6, 1]);
-            Console.WriteLine(region[7, 0] + " " + region[7, 1]);
-            Console.WriteLine(region[8, 0] + " " + region[8, 1]);
+            foreach (int r in region)
+            {
+                Console.WriteLine(r);
+            }
         }
     }
 }
