@@ -2148,6 +2148,7 @@ namespace Processor
         }
         public static void RegionGrowing(Bitmap image, string savePath)
         {
+            Bitmap res = new Bitmap(image);
             List<int> localRegion = new List<int>();
             List<int> region = new List<int>();
             region.Add(242);
@@ -2158,22 +2159,25 @@ namespace Processor
             int x = 0;
             while (true)
             {
-                if (region.Count == oldCount)
+                if (x == region.Count)
                     break;
                 oldCount = region.Count;
                 //Console.WriteLine(region[x] + " " + region[x + 1]);
                 //Thread.Sleep(3000);
-                localRegion = GrowRegion8(image, region[x], region[x + 1], 100, image.GetPixel(242, 232).R, region);
+                localRegion = GrowRegion8(image, region[x], region[x + 1], 50, image.GetPixel(242, 232).R, region);
                // Console.WriteLine(localRegion[0] + " " + localRegion[1]);
                 region.AddRange(localRegion);
                 localRegion.Clear();
                 x += 2;
             }
 
-            foreach (int r in region)
+            for(int i = 0; i < region.Count; i+=2)
             {
-                Console.WriteLine(r);
+                Console.WriteLine(region[i] + " " + region[i + 1]);
+                res.SetPixel(region[i], region[i + 1], Color.FromArgb(0, 0, 0));
             }
+
+            ih.saveImage(res, savePath);
         }
     }
 }
