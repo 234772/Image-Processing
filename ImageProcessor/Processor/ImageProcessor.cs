@@ -1756,7 +1756,6 @@ namespace Processor
             int z = 0;
             for(int i = 0; i < bytes; i+=3)
             {
-                //Console.WriteLine(k + " " + z);
                 values1[k, z] = pixels1[i];
                 values2[k, z++] = pixels2[i];
                 if (z == 512)
@@ -1783,12 +1782,11 @@ namespace Processor
                         {
                             if (seed[o, p] != 0)
                             {
-                                if (values1[j + p - 1, i + o - 1] == 0)
+                                if (values1[j + p - 1, i + o - 1] == (Math.Abs(seed[o, p] - 1)) * 127.5)
                                 {
-                                    if (values1[j, i] == 0) break;
-                                    byte newColor = (byte)(values1[j, i] - seed[1, 1] * 255);
+                                    if (values1[j, i] == 0 && seed[1, 1] == 1) break;
+                                    byte newColor = (byte)(- seed[1, 1] * 255);
                                     values2[j, i] = newColor;
-                                    //res.SetPixel(j, i, Color.FromArgb(newColor, newColor, newColor));
                                     break;
                                 }
                             }
@@ -1812,33 +1810,6 @@ namespace Processor
                     w = 0;
                 }
             }
-
-            //for (int i = 0; i < height; i++)
-            //{
-            //    if (i == 0) continue;
-            //    if (i == height - 1) continue;
-            //    for (int j = 0; j < width; j++)
-            //    {
-            //        if (j == 0) continue;
-            //        if (j == width - 1) continue;
-            //        for (int o = 0; o < 3; o++)
-            //        {
-            //            for (int p = 0; p < 3; p++)
-            //            {
-            //                if (seed[o, p] != 0)
-            //                {
-            //                    if (image.GetPixel(j + p - 1, i + o - 1).R == 0)
-            //                    {
-            //                        if (image.GetPixel(j, i).R == 0) break;
-            //                        byte newColor = (byte)(image.GetPixel(j, i).R  - seed[1, 1] * 255);
-            //                        res.SetPixel(j, i, Color.FromArgb(newColor, newColor, newColor));
-            //                        break;
-            //                    }
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
             Marshal.Copy(pixels2, 0, bmpData2.Scan0, bytes);
             image.UnlockBits(bmpData1);
             res.UnlockBits(bmpData2);
@@ -2026,20 +1997,6 @@ namespace Processor
                 else
                     pixels3[i] = 255;
             }
-
-            //for (int i = 0; i < height; i++)
-            //{
-            //    for(int j = 0; j < width; j++)
-            //    {
-            //        var image1Color = image1.GetPixel(j, i).R;
-            //        var image2Color = image2.GetPixel(j, i).R;
-
-            //        if (image1Color == image2Color)
-            //            res.SetPixel(j, i, Color.FromArgb(image1Color, image1Color, image1Color));
-            //        else
-            //            res.SetPixel(j, i, Color.FromArgb(255, 255, 255));
-            //    }
-            //}
             Marshal.Copy(pixels3, 0, bmpData3.Scan0, bytes);
             image1.UnlockBits(bmpData1);
             image2.UnlockBits(bmpData2);
