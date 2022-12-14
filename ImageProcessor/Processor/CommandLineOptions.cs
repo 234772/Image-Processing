@@ -85,7 +85,7 @@ namespace Processor
         [Option(longName: "m3", Required = false, HelpText = "Performs the morphological operation specified in the M3 point, on the image. Use the following format: kernel x y.", Default = null)]
         public IEnumerable<int> m3 { get; set; }
         [Option(longName: "regiongg", Required = false, HelpText = "Segments the image using the region growing method.", Default = false)]
-        public bool region { get; set; }
+        public IEnumerable<int> region { get; set; }
 
         public enum Channel
         {
