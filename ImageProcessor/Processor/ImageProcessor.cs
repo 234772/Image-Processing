@@ -2102,7 +2102,6 @@ namespace Processor
                     Color color = image.GetPixel(seedX + j, seedY + i);
                     if (Math.Abs(color.R - seedValue) < threshold && !IsDuplicate(region, seedX + j, seedY + i))
                     {
-                        Console.WriteLine(seedX + j + " " + seedY + i);
                         localRegion.Add(seedX + j);
                         localRegion.Add(seedY + i);
                     }
@@ -2125,6 +2124,8 @@ namespace Processor
         {
             Bitmap res = new Bitmap(image);
             List<int> localRegion = new List<int>();
+            List<int> localLocalRegion = new List<int>();
+            List<int> localLocalLocalRegion = new List<int>();
             List<List<int>> regions = new List<List<int>>();
             int k = 0;
             for(int i = 0; i < seedPoints.Count; i+=2)
@@ -2143,24 +2144,34 @@ namespace Processor
             //region.Add(232);
 
             int x = 0;
-            //while (true)
-            //{
-            //    if (x == 100)
-            //        break;
-                for(int i = 0; i < regions.Count; i++)
-                {
-                    for(int j = 0; j < regions[i].Count; j+=2)
-                    {
-                        //Console.WriteLine(x);
-                        localRegion = GrowRegion8(image, regions[i][j], regions[i][j + 1], threshold, image.GetPixel(regions[i][0], regions[i][1]).R, regions[i]);
-                        for(int z = 0; z < localRegion.Count; z++)
-                        {
-                            //Console.WriteLine(localRegion[z]);
-                        }
+            int count2 = 0;
+            while (true)
+            {
+                if (x == 100)
                     break;
+                for (int i = 0; i < regions.Count; i++)
+                {
+                    localLocalRegion = regions[i];
+                    int count = 0;
+                    if (x == 0)
+                        count = localLocalRegion.Count;
+                    else
+                        count = count2;
+                    for (int j = 0; j < count; j+=2)
+                    {
+                        Console.WriteLine(j);
+                        Console.WriteLine(localLocalRegion.Count);
+                        int regionElement1 = localLocalRegion[j];
+                        int regionElement2 = localLocalRegion[j + 1];
+                        localRegion = GrowRegion8(image, regionElement1, regionElement2, threshold, image.GetPixel(regions[i][0], regions[i][1]).R, regions[i]);
+                        localLocalRegion.Remove(regionElement1);
+                        localLocalRegion.Remove(regionElement2);
+                        localLocalRegion.AddRange(localRegion);
                         regions[i].AddRange(localRegion);
                         localRegion.Clear();
                     }
+                    count2 = localLocalRegion.Count;
+                    //localLocalRegion.Clear();
                 }
                 //localRegion = GrowRegion8(image, region[x], region[x + 1], 50, image.GetPixel(242, 232).R, region);
                 //region.AddRange(localRegion);
@@ -2170,7 +2181,7 @@ namespace Processor
             //for(int i = 0; i < region.Count; i+=2)
             //{
             //    res.SetPixel(region[i], region[i + 1], Color.FromArgb(0, 0, 0));
-            //}
+            }
 
             for(int i = 0; i < regions.Count; i++)
             {
