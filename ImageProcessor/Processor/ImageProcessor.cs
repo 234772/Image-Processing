@@ -1785,8 +1785,16 @@ namespace Processor
                                 if (values1[j + p - 1, i + o - 1] == (Math.Abs(seed[o, p] - 1)) * 127.5)
                                 {
                                     if (values1[j, i] == 0 && seed[1, 1] == 1) break;
-                                    byte newColor = (byte)(- seed[1, 1] * 255);
-                                    values2[j, i] = newColor;
+                                    else if (values1[j, i] == 255 && seed[1, 1] == -1)
+                                    {
+                                        byte newColor = (byte)(-seed[1, 1] * 255);
+                                        values2[j, i] = newColor;
+                                    }
+                                    else
+                                    {
+                                        byte newColor = (byte)(255 - seed[1, 1] * 255);
+                                        values2[j, i] = newColor;
+                                    }
                                     break;
                                 }
                             }
@@ -2057,6 +2065,7 @@ namespace Processor
             }
 
             res.SetPixel(x, y, Color.FromArgb(0, 0, 0));
+            ih.saveImage(res, "gówno.bmp");
 
             int iteration = 0;
             do
