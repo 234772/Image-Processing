@@ -2113,24 +2113,35 @@ namespace Processor
         }
         public static bool IsDuplicate(List<Pixel> list, Pixel pixel)
         {
-            return list.All(x => x.Equals(pixel));
+            //if(list.All(x => x.Equals(pixel)))
+            //    Console.WriteLine("This is duplicate:" + pixel.X + " " + pixel.Y);
+            //return list.All(x => x.Equals(pixel));
+            foreach(Pixel p in list)
+            {
+                if (p.Equals(pixel))
+                    return true;
+            }
+            return false;
         }
         public static void RegionGrowing(Bitmap image, string savePath, int threshold, List<int> seedPoints)
         {
             Bitmap res = new Bitmap(image);
 
             List<List<Pixel>> regions = new List<List<Pixel>>();
-            List<Pixel> localRegion = new List<Pixel>();
+            List<List<Pixel>> localRegion = new List<List<Pixel>>();
+            List<List<Pixel>> finalRegions = new List<List<Pixel>>();
+            List<int> oldCounts = new List<int>();
+            List<int> newCounts = new List<int>();
             List<Pixel> seeds = new List<Pixel>();
 
-            for(int i = 0; i < seedPoints.Count; i+=2)
+            
+            for (int i = 0; i < seedPoints.Count; i+=2)
             {
-                Console.WriteLine(i);
                 Pixel p = new Pixel(seedPoints[i], seedPoints[i + 1]);
                 regions.Add(new List<Pixel>());
-                regions[i].Add(p);
+                localRegion.Add(new List<Pixel>());
+                finalRegions.Add(new List<Pixel>());
                 seeds.Add(p);
-                
             }
 
             int x = 0;
@@ -2138,86 +2149,63 @@ namespace Processor
 
             while(true)
             {
-                if (x == 10000)
+                int stopper = 0;
+                for(int w = 0; w < oldCounts.Count; w++)
+                {
+                    if (oldCounts[w] == newCounts[w])
+                        stopper++;
+                }
+                if (stopper == regions.Count)
                     break;
-
-                if (x == 0)
-                    count = 2;
                 else
-                    count = localRegion.Count;
+                {
+                    oldCounts.Clear();
+                    newCounts.Clear();
+                }
 
                 for(int i = 0; i < regions.Count; i++)
                 {
-                    for(int j = 0; j < count; j++)
+                    oldCounts.Add(regions[i].Count);
+                    if (x == 0)
+                        count = 1;
+                    else
+                        count = localRegion[i].Count;
+                    if (regions[i].Count > 1000)
                     {
-                        localRegion = GrowRegion8(image, regions[i][j], 20, image.GetPixel(seeds[i].X, seeds[i].Y).R, regions[i]);
-                        foreach(Pixel p in localRegion)
-                        {
-                            Console.WriteLine(p.X + " " + p.Y);
-                        }
-                        regions[i].AddRange(localRegion);
-                        localRegion.Remove(regions[i][j]);
+                        int numberToRemove = (int)(regions[i].Count * 0.75);
+                        List<Pixel> holder = regions[i].ConvertAll(pixel => new Pixel(pixel));
+                        int numberToLeave = holder.Count - numberToRemove;
+                        holder.RemoveRange(numberToRemove - 1, numberToLeave);
+                        finalRegions[i].AddRange(holder);
+                        regions[i].RemoveRange(0, numberToRemove);
                     }
-                    count = localRegion.Count;
+                    if(x == 0)
+                        localRegion[i].Add(seeds[i]);
+                    for (int j = 0; j < count; j++)
+                    {
+                        localRegion[i].AddRange(GrowRegion8(image, localRegion[i][j], threshold, image.GetPixel(seeds[i].X, seeds[i].Y).R, regions[i]));
+                        regions[i].AddRange(localRegion[i]);
+                    }
+                    localRegion[i].RemoveRange(0, count);
+                    newCounts.Add(regions[i].Count);
                 }
+                Console.WriteLine(x);
                 x += 2;
+
             }
+            for(int i = 0; i < finalRegions.Count; i++)
+            {
+                finalRegions[i].AddRange(regions[i]);
+            }
+            for (int i = 0; i < finalRegions.Count; i++)
+            {
+                for (int j = 0; j < finalRegions[i].Count; j++)
+                {
+                    res.SetPixel(finalRegions[i][j].X, finalRegions[i][j].Y, Color.FromArgb(0, 0, 0));
+                }
+            }
+
+            ih.saveImage(res, savePath);
         }
-        //public static void RegionGrowing(Bitmap image, string savePath, int threshold, List<int> seedPoints)
-        //{
-        //    Bitmap res = new Bitmap(image);
-        //    List<int> localRegion = new List<int>();
-        //    List<List<int>> regions = new List<List<int>>();
-        //    int k = 0;
-        //    for(int i = 0; i < seedPoints.Count; i+=2)
-        //    {
-        //        //Console.WriteLine(seedPoints[i]);
-        //        //Console.WriteLine(seedPoints[i+1]);
-        //        //regions[k].Add(seedPoints[i]);
-        //        //regions[k++].Add(seedPoints[i + 1]);
-        //        List<int> region = new List<int>();
-        //        region.Add(seedPoints[i]);
-        //        region.Add(seedPoints[i + 1]);
-        //        regions.Add(region);
-        //    }
-        //    //region.AddRange(seedPoints);
-        //    //region.Add(242);
-        //    //region.Add(232);
-
-        //    int x = 0;
-        //    //while (true)
-        //    //{
-        //    //    if (x == 100)
-        //    //        break;
-        //        for(int i = 0; i < regions.Count; i++)
-        //        {
-        //            for(int j = 0; j < regions[i].Count; j+=2)
-        //            {
-        //                //Console.WriteLine(x);
-        //                localRegion = GrowRegion8(image, regions[i][j], regions[i][j + 1], threshold, image.GetPixel(regions[i][0], regions[i][1]).R, regions[i]);
-        //                regions[i].AddRange(localRegion);
-        //                localRegion.Clear();
-        //            }
-        //        }
-        //        //localRegion = GrowRegion8(image, region[x], region[x + 1], 50, image.GetPixel(242, 232).R, region);
-        //        //region.AddRange(localRegion);
-        //        x += 2;
-        //    //}
-
-        //    //for(int i = 0; i < region.Count; i+=2)
-        //    //{
-        //    //    res.SetPixel(region[i], region[i + 1], Color.FromArgb(0, 0, 0));
-        //    //}
-
-        //    for(int i = 0; i < regions.Count; i++)
-        //    {
-        //        for(int j = 0; j < regions[i].Count; j+=2)
-        //        {
-        //            res.SetPixel(regions[i][j], regions[i][j + 1], Color.FromArgb(0, 0, 0));
-        //        }
-        //    }
-
-        //    ih.saveImage(res, savePath);
-        //}
     }
 }

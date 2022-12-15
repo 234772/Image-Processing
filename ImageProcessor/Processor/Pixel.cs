@@ -16,6 +16,11 @@ namespace Processor
             this.x = x;
             this.y = y;
         }
+        public Pixel(Pixel p)
+        {
+            x = p.x;
+            y = p.y;
+        }
 
         public int X { get { return x; } }
         public int Y { get { return y; } }
