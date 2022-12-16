@@ -2073,7 +2073,6 @@ namespace Processor
             }
 
             res.SetPixel(x, y, Color.FromArgb(0, 0, 0));
-            ih.saveImage(res, "gówno.bmp");
 
             int iteration = 0;
             do
@@ -2099,11 +2098,12 @@ namespace Processor
                     if (seed.X == 0) continue;
                     if (i == 0 && j == 0) continue;
                     if (seed.X == image.Width - 1) break;
+
                     Pixel pixel = new Pixel(seed.X + j, seed.Y + i);
                     Color color = image.GetPixel(seed.X + j, seed.Y + i);
+
                     if (Math.Abs(color.R - seedValue) < threshold && !IsDuplicate(region, pixel))
                     {
-                        //Console.WriteLine(seedX + j + " " + seedY + i);
                         localRegion.Add(pixel);
                     }
                 }
@@ -2113,9 +2113,6 @@ namespace Processor
         }
         public static bool IsDuplicate(List<Pixel> list, Pixel pixel)
         {
-            //if(list.All(x => x.Equals(pixel)))
-            //    Console.WriteLine("This is duplicate:" + pixel.X + " " + pixel.Y);
-            //return list.All(x => x.Equals(pixel));
             foreach(Pixel p in list)
             {
                 if (p.Equals(pixel))
@@ -2191,7 +2188,6 @@ namespace Processor
                 }
                 Console.WriteLine(x);
                 x += 2;
-
             }
             for(int i = 0; i < finalRegions.Count; i++)
             {
