@@ -2228,5 +2228,23 @@ namespace Processor
             res = Complement(image);
             ih.saveImage(res,savePath);
         }
+
+        public static Bitmap NFunctionInM5(Bitmap a, int kernelNumber)
+        {
+            return Intersection(a, Complement(Dilation(a, "", kernelNumber)), "");
+        }
+
+        public static void SFunctionInM7(Bitmap a, int kernelNumber, int k) 
+        {
+        //not finished
+            Bitmap erodedImage;
+
+            for (int x = 0; x < k; x++)
+            {
+                erodedImage = Erosion(a, "", kernelNumber);
+                a = erodedImage;
+            }
+            
+        }
     }
 }
