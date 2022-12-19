@@ -127,6 +127,8 @@ namespace Processor
                 else
                     Console.WriteLine("Wrong number of arguments for seed points");
             }
+            if (o.complement)
+                ComputeComplement(ih.Bmp, o.secondPath);
 
         }
         /// <summary>
@@ -2202,6 +2204,29 @@ namespace Processor
             }
 
             ih.saveImage(res, savePath);
+        }
+
+        public static Bitmap Complement(Bitmap image)
+        {
+            int width = image.Width;
+            int height = image.Height;
+            Bitmap res = new Bitmap(width, height);
+
+            for (int x = 0; x < height; x++)
+            {
+                for (int y = 0; y < width; y++)
+                {
+                    res.SetPixel(x,y,image.GetPixel(x,y).R == 0 ? Color.White : Color.Black);
+                }
+            }
+            return res;
+        }
+        
+        public static void ComputeComplement(Bitmap image, string savePath)
+        {
+            Bitmap res;
+            res = Complement(image);
+            ih.saveImage(res,savePath);
         }
     }
 }

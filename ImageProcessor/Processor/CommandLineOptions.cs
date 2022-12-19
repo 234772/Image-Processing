@@ -82,6 +82,8 @@ namespace Processor
         public int hmtKernel { get; set; }
         [Option(longName: "intersection", Required = false, HelpText = "Performs the morphological operation of intersection on the image.", Default = false)]
         public bool intersection { get; set; }
+        [Option(longName: "complement", Required = false, HelpText = "Compute the complement of the image", Default = false)]
+        public bool complement { get; set; }
         [Option(longName: "m3", Required = false, HelpText = "Performs the morphological operation specified in the M3 point, on the image. Use the following format: kernel x y.", Default = null)]
         public IEnumerable<int> m3 { get; set; }
         [Option(longName: "regiongg", Required = false, HelpText = "Segments the image using the region growing method.", Default = null)]
