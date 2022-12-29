@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Data.OleDb;
 using System.Drawing;
 using System.Drawing.Imaging;
@@ -129,7 +130,8 @@ namespace Processor
             }
             if (o.complement)
                 ComputeComplement(ih.Bmp, o.secondPath);
-
+            if(o.fourierTransform)
+                DFT(ih.Bmp,o.secondPath);
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -378,7 +380,7 @@ namespace Processor
             byte[] bytesG = new byte[image.Height * image.Width];
 
             IntPtr ptr = bmpData.Scan0;
-
+   
             // Copy the RGB values into the array.
             Marshal.Copy(ptr, rgbValues, 0, image.Height * bmpData.Stride);
 
@@ -2244,7 +2246,44 @@ namespace Processor
                 erodedImage = Erosion(a, "", kernelNumber);
                 a = erodedImage;
             }
+        }
+        
+        public static void DFT(Bitmap image, string savePath)
+        {
             
+            // BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
+            byte[] pixelValues = new byte[3 * 3];
+            double N = 9;
+            
+            // int N = bmpData.Stride * image.Height;
+            // Marshal.Copy(bmpData.Scan0, pixelValues, 0, image.Height * bmpData.Stride);
+            double[] realPart = new double[3];
+            double[] imaginaryPart = new double[3];
+            //Numbers from AI
+            double[,] X = { {100,150,200}, {120,180,220}, {140,210,240} };
+            double realSum = 0;
+            double[] row = new double[3];
+           
+            for (int k = 0; k < N / 3; k++)
+            {
+                for (int x = 0; x < N/3; x++)
+                {
+                    realPart[k] += X[k , x] * Math.Cos(-2 * Math.PI * k * x / N);
+                    imaginaryPart[k] += X[k,x] * Math.Sin(-2 * Math.PI * k * x / N);
+                }
+                
+                realPart[k] = (1 / N) * realPart[k];
+                imaginaryPart[k] = (1 / N) * imaginaryPart[k];
+                Console.WriteLine(realPart[1]);
+                Console.WriteLine(imaginaryPart[1]);
+                ///(not) imaginary problem
+                row[k] = realPart[k] + Math.Sqrt(-1) * imaginaryPart[k];
+            }
+
+            for (int k = 0; k < 3; k++)
+            {
+                Console.WriteLine(row[k]);
+            }
         }
     }
 }
