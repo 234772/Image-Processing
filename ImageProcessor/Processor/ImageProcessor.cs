@@ -2085,7 +2085,7 @@ namespace Processor
 
             ih.saveImage(res, savePath);
         }
-        public static List<Pixel> GrowRegion8(Bitmap image, Pixel seed, int threshold, byte seedValue, List<Pixel> region)
+        public static List<Pixel> GrowRegion8(Bitmap image, Pixel seed, int threshold, Color seedValue, List<Pixel> region)
         {
             List<Pixel> localRegion = new List<Pixel>();
 
@@ -2101,8 +2101,10 @@ namespace Processor
 
                     Pixel pixel = new Pixel(seed.X + j, seed.Y + i);
                     Color color = image.GetPixel(seed.X + j, seed.Y + i);
+                    int meanColor = (color.R + color.G + color.B) / 3;
+                    int seedMeanColor = (seedValue.R + seedValue.G + seedValue.B) / 3;
 
-                    if (Math.Abs(color.R - seedValue) < threshold && !IsDuplicate(region, pixel))
+                    if (Math.Abs(meanColor - seedMeanColor) < threshold && !IsDuplicate(region, pixel))
                     {
                         localRegion.Add(pixel);
                     }
@@ -2180,7 +2182,7 @@ namespace Processor
                         localRegion[i].Add(seeds[i]);
                     for (int j = 0; j < count; j++)
                     {
-                        localRegion[i].AddRange(GrowRegion8(image, localRegion[i][j], threshold, image.GetPixel(seeds[i].X, seeds[i].Y).R, regions[i]));
+                        localRegion[i].AddRange(GrowRegion8(image, localRegion[i][j], threshold, image.GetPixel(seeds[i].X, seeds[i].Y), regions[i]));
                         regions[i].AddRange(localRegion[i]);
                     }
                     localRegion[i].RemoveRange(0, count);
