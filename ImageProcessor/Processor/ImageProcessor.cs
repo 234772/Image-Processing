@@ -131,7 +131,7 @@ namespace Processor
             if (o.complement)
                 ComputeComplement(ih.Bmp, o.secondPath);
             if(o.fourierTransform)
-                DFT(ih.Bmp,o.secondPath);
+                DFT2(ih.Bmp,o.secondPath);
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -2250,40 +2250,119 @@ namespace Processor
         
         public static void DFT(Bitmap image, string savePath)
         {
-            
+
             // BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            byte[] pixelValues = new byte[3 * 3];
-            double N = 9;
-            
-            // int N = bmpData.Stride * image.Height;
-            // Marshal.Copy(bmpData.Scan0, pixelValues, 0, image.Height * bmpData.Stride);
-            double[] realPart = new double[3];
-            double[] imaginaryPart = new double[3];
-            //Numbers from AI
-            double[,] X = { {100,150,200}, {120,180,220}, {140,210,240} };
-            double realSum = 0;
-            double[] row = new double[3];
-           
-            for (int k = 0; k < N / 3; k++)
+            //byte[] pixelValues = new byte[3 * 3];
+            //double N = 9;
+
+            //// int N = bmpData.Stride * image.Height;
+            //// Marshal.Copy(bmpData.Scan0, pixelValues, 0, image.Height * bmpData.Stride);
+            //double[] realPart = new double[3];
+            //double[] imaginaryPart = new double[3];
+            ////Numbers from AI
+            //int width = image.Width;
+            //int height = image.Height;
+            int width = image.Width;
+            int height = image.Height;
+            Bitmap res = new Bitmap(width, height);
+            double[,] X = { { 100, 150, 200 }, { 120, 180, 220 }, { 140, 210, 240 } };
+            double twiddle;
+            double[,] real = new double[height, width];
+            double[,] imaginary = new double[height, width];
+            double[,] magnitude = new double[height, width];
+            //for (int i = 0; i < width; i++)
+            //{
+            //    Console.Write(image.GetPixel(i, 1).R + ",");
+            //}
+            //Console.WriteLine();
+            //return;
+            for (int i = 0; i < height; i++)
             {
-                for (int x = 0; x < N/3; x++)
+                for(int j = 0; j < width; j++)
                 {
-                    realPart[k] += X[k , x] * Math.Cos(-2 * Math.PI * k * x / N);
-                    imaginaryPart[k] += X[k,x] * Math.Sin(-2 * Math.PI * k * x / N);
+                    for(int k = 0; k < width; k++)
+                    {
+                        real[i, j] += image.GetPixel(i, k).R * Math.Cos(-2 * Math.PI * j * k / width);
+                        imaginary[i, j] += image.GetPixel(i, k).R * Math.Sin(-2 * Math.PI * j * k / width);
+                    }
+                    //real[i, j] = real[i, j] / width;
+                    //imaginary[i, j] = imaginary[i, j] / width;
                 }
-                
-                realPart[k] = (1 / N) * realPart[k];
-                imaginaryPart[k] = (1 / N) * imaginaryPart[k];
-                Console.WriteLine(realPart[1]);
-                Console.WriteLine(imaginaryPart[1]);
-                ///(not) imaginary problem
-                row[k] = realPart[k] + Math.Sqrt(-1) * imaginaryPart[k];
             }
 
-            for (int k = 0; k < 3; k++)
+            for (int i = 0; i < height; i++)
             {
-                Console.WriteLine(row[k]);
+                for (int j = 0; j < width; j++)
+                {
+                    double tempReal = real[i, j];
+                    double tempImaginary = imaginary[i, j];
+                    for (int k = 0; k < width; k++)
+                    {
+                        real[i, j] += tempReal * Math.Cos(-2 * Math.PI * j * k / width) - tempImaginary * Math.Sin(-2 * Math.PI * j * k / width);
+                        imaginary[i, j] += tempReal * Math.Sin(-2 * Math.PI * j * k / width) + tempImaginary * Math.Cos(-2 * Math.PI * j * k / width);
+                    }
+                    //real[i, j] = real[i, j] / width;
+                    //imaginary[i, j] = imaginary[i, j] / width;
+                }
             }
+
+            for (int i = 0; i < width; i++)
+            {
+                Console.WriteLine(real[1, i]);
+            }
+            int pixel;
+            for(int i = 0; i < height; i++)
+            {
+                for(int j = 0; j < width; j++)
+                {
+                    magnitude[i, j] = Math.Sqrt(Math.Pow(real[i, j],2) + Math.Pow(imaginary[i, j], 2));
+                    pixel = Clamp((int)magnitude[i, j]);
+                    res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
+                }
+            }
+            ih.saveImage(res, savePath);
+        }
+        public static void DFT2(Bitmap image, string savePath)
+        {
+            Bitmap res = new Bitmap(image.Width, image.Height);
+
+            int M = image.Width;
+            int N = image.Height;
+
+            double[,] real = new double[N, M];
+            double[,] imaginary = new double[N, M];
+            double[,] magnitude = new double[N, M];
+
+            double factor = 1 / (Math.Sqrt(N * M)); 
+
+            for (int u = 0; u < M; u++)
+            {
+                for(int v = 0; v < N; v++)
+                {
+                    for(int x = 0; x < M; x++)
+                    {
+                        for(int y = 0; y < N; y++)
+                        {
+                            double angle = 2 * Math.PI * (u * x) / M + 2 * Math.PI * (v * y) / N;
+                            real[u, v] += image.GetPixel(y, x).R * Math.Cos(angle);
+                            imaginary[u, v] += image.GetPixel(y, x).R * (- Math.Sin(angle));
+                        }
+                    }
+                    real[u, v] *= factor;
+                    imaginary[u, v] *= factor;
+                }
+            }
+            int pixel;
+            for (int i = 0; i < N; i++)
+            {
+                for (int j = 0; j < M; j++)
+                {
+                    magnitude[i, j] = Math.Sqrt(Math.Pow(real[i, j], 2) + Math.Pow(imaginary[i, j], 2));
+                    pixel = Clamp((int)magnitude[i, j]);
+                    res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
+                }
+            }
+            ih.saveImage(res, savePath);
         }
     }
 }
