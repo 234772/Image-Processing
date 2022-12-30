@@ -5,6 +5,7 @@ using System.Data.OleDb;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -2329,9 +2330,12 @@ namespace Processor
             int M = image.Width;
             int N = image.Height;
 
-            double[,] real = new double[N, M];
-            double[,] imaginary = new double[N, M];
+            //double[,] real = new double[N, M];
+            //double[,] imaginary = new double[N, M];
             double[,] magnitude = new double[N, M];
+
+            Complex[,] dft = new Complex[N, M];
+            Complex I = new Complex(0, 1);
 
             double factor = 1 / (Math.Sqrt(N * M)); 
 
@@ -2344,22 +2348,22 @@ namespace Processor
                         for(int y = 0; y < N; y++)
                         {
                             double angle = 2 * Math.PI * (u * x) / M + 2 * Math.PI * (v * y) / N;
-                            real[u, v] += image.GetPixel(y, x).R * Math.Cos(angle);
-                            imaginary[u, v] += image.GetPixel(y, x).R * (- Math.Sin(angle));
+                            dft[u, v] += Complex.Exp(-I * angle) * image.GetPixel(y, x).R * factor;
                         }
                     }
-                    real[u, v] *= factor;
-                    imaginary[u, v] *= factor;
+                    //Console.WriteLine(dft[u, v].Real);
                 }
             }
+            Console.WriteLine(dft[0, 0].Real);
             int pixel;
-            for (int i = 0; i < N; i++)
+            for(int i = 0; i < N; i ++)
             {
-                for (int j = 0; j < M; j++)
+                for(int j = 0; j < M; j++)
                 {
-                    magnitude[i, j] = Math.Sqrt(Math.Pow(real[i, j], 2) + Math.Pow(imaginary[i, j], 2));
-                    pixel = Clamp((int)magnitude[i, j]);
-                    res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
+                    //magnitude[j, i] = Math.Sqrt(Math.Pow(dft[j, i].Real, 2) + Math.Pow(dft[j, i].Imaginary, 2));
+                    magnitude[j, i] = Math.Atan(dft[j, i].Imaginary / dft[j,i].Real);
+                    pixel = Clamp((int)magnitude[j, i]);
+                    res.SetPixel(i, j, Color.FromArgb(pixel, pixel, pixel));
                 }
             }
             ih.saveImage(res, savePath);
