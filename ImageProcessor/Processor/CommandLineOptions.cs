@@ -90,6 +90,8 @@ namespace Processor
         public IEnumerable<int> m3 { get; set; }
         [Option(longName: "regiongg", Required = false, HelpText = "Segments the image using the region growing method.", Default = null)]
         public IEnumerable<int> region { get; set; }
+        [Option(longName: "fft", Required = false, HelpText = "Return the FFT of an image", Default = false)]
+        public bool fft { get; set; }
 
         public enum Channel
         {
