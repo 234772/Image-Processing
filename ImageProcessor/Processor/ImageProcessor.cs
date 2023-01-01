@@ -136,12 +136,7 @@ namespace Processor
                 DFT2(ih.Bmp,o.secondPath);
             if(o.fft)
             {
-                Complex[] test = { 22, 34, 43, 47, 43, 34, 22, 22 };
-                Complex[] output = FFT(test);
-                foreach(Complex c in output)
-                {
-                    Console.WriteLine(c.Real);
-                }
+                RepresentFFTAsImage(ih.Bmp, o.secondPath);
             }
         }
         /// <summary>
@@ -2376,41 +2371,41 @@ namespace Processor
             }
             ih.saveImage(res, savePath);
         }
-        //public static void RepresentFFTAsImage(Bitmap image, string savePath)
-        //{
-        //    Bitmap res = new Bitmap(image.Width, image.Height);
+        public static void RepresentFFTAsImage(Bitmap image, string savePath)
+        {
+            Bitmap res = new Bitmap(image.Width, image.Height);
 
-        //    Complex[,] input = new Complex[128, 128];
-        //    Complex[,] output = new Complex[128, 128];
+            Complex[,] input = new Complex[128, 128];
+            Complex[,] output;
 
-        //    for(int i = 0; i < image.Height; i++)
-        //    {
-        //        for(int j = 0; j < image.Width; j++)
-        //        {
-        //            input[j, i] = image.GetPixel(j, i).R;
-        //        }
-        //    }
+            for (int i = 0; i < image.Height; i++)
+            {
+                for (int j = 0; j < image.Width; j++)
+                {
+                    input[i, j] = image.GetPixel(j, i).R;
+                }
+            }
 
-        //    output = FFT2D(input);
+            output = FFT2D(input);
 
-        //    int pixel;
-        //    for (int i = 0; i < image.Height; i++)
-        //    {
-        //        for (int j = 0; j < image.Width; j++)
-        //        {
-        //            pixel = Clamp((int)Math.Sqrt(Math.Pow(output[j, i].Real, 2) + Math.Pow(output[j, i].Imaginary, 2)));
-        //            res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
-        //        }
-        //    }
+            int pixel;
+            for (int i = 0; i < image.Height; i++)
+            {
+                for (int j = 0; j < image.Width; j++)
+                {
+                    pixel = Clamp((int)Math.Sqrt(Math.Pow(output[i, j].Real, 2) + Math.Pow(output[i, j].Imaginary, 2)));
+                    res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
+                }
+            }
 
-        //    ih.saveImage(res, savePath);
-        //}
+            ih.saveImage(res, savePath);
+        }
         public static Complex[] FFT(Complex[] input)
         {
             // Get the length of the input array
-            //Console.WriteLine(input.Length);
             int n = input.Length;
 
+            Complex I = new Complex(0, 1);
             // Check if the input has a length of 1
             if (n == 1)
             {
@@ -2439,12 +2434,59 @@ namespace Processor
 
             // Combine the FFT of the even and odd elements using the butterfly notation
             Complex[] output = new Complex[n];
-            Complex I = new Complex(0, 1);
             for (int i = 0; i < n / 2; i++)
             {
                 Complex w = Complex.Exp(-2 * I * Math.PI * i / n);
                 output[i] = evenFFT[i] + w * oddFFT[i];
                 output[i + n / 2] = evenFFT[i] - w * oddFFT[i];
+            }
+
+            return output;
+        }
+        public static Complex[,] FFT2D(Complex[,] input)
+        {
+            int N = input.GetLength(0);
+            int M = input.GetLength(1);
+
+            Complex[,] output = new Complex[128, 128];
+            Complex[,] columnsFFT = new Complex[128, 128];
+
+            //Perform FFT over the columns of the input
+            for(int i = 0; i < M; i++)
+            {
+                //Put all the values from i'th column in the tempColumn variable
+                var tempColumn = new Complex[128];
+                for(int j = 0; j < N; j++)
+                {
+                    tempColumn[j] = input[j, i];    
+                }
+                //Calculate the FFT of i'th column
+                tempColumn = FFT(tempColumn);
+                //Assign the column to columnsFFT, after calculating its FFT
+                for(int z = 0; z < 128; z++)
+                {
+                    columnsFFT[z, i] = tempColumn[z];
+                }
+            }
+
+            //Perform FFT over the rows of the columnsFFT
+            for(int i = 0; i < N; i++)
+            {
+                //Put the values from i'th row in tempRow, so we can perform the FFT on its entirety 
+                var tempRow = new Complex[128];
+                for(int j = 0; j < M; j++)
+                {
+                    tempRow[j] = columnsFFT[i, j];
+                }
+                //Calculate the FFT on tempRow
+                tempRow = FFT(tempRow);
+                //Assign the tempRow to the output
+                for(int z = 0; z < M; z++)
+                {
+                    if (i == 0)
+                        Console.WriteLine(tempRow[z].Real);
+                    output[i, z] = tempRow[z];
+                }
             }
 
             return output;
