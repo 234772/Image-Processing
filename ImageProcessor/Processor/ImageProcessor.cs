@@ -2373,9 +2373,11 @@ namespace Processor
         }
         public static void RepresentFFTAsImage(Bitmap image, string savePath)
         {
-            Bitmap res = new Bitmap(image.Width, image.Height);
+            int width = image.Width;
+            int height = image.Height;
+            Bitmap res = new Bitmap(width, height);
 
-            Complex[,] input = new Complex[128, 128];
+            Complex[,] input = new Complex[width, height];
             Complex[,] output;
 
             for (int i = 0; i < image.Height; i++)
@@ -2393,7 +2395,8 @@ namespace Processor
             {
                 for (int j = 0; j < image.Width; j++)
                 {
-                    pixel = Clamp((int)Math.Sqrt(Math.Pow(output[i, j].Real, 2) + Math.Pow(output[i, j].Imaginary, 2)));
+                    pixel = Clamp((int)Math.Log(Math.Sqrt(Math.Pow(output[i, j].Real, 2) + Math.Pow(output[i, j].Imaginary, 2)), 1.07));
+                    //Console.WriteLine(pixel);
                     res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
                 }
             }
@@ -2448,14 +2451,14 @@ namespace Processor
             int N = input.GetLength(0);
             int M = input.GetLength(1);
 
-            Complex[,] output = new Complex[128, 128];
-            Complex[,] columnsFFT = new Complex[128, 128];
+            Complex[,] output = new Complex[N, M];
+            Complex[,] columnsFFT = new Complex[N, M];
 
             //Perform FFT over the columns of the input
             for(int i = 0; i < M; i++)
             {
                 //Put all the values from i'th column in the tempColumn variable
-                var tempColumn = new Complex[128];
+                var tempColumn = new Complex[N];
                 for(int j = 0; j < N; j++)
                 {
                     tempColumn[j] = input[j, i];    
@@ -2463,7 +2466,7 @@ namespace Processor
                 //Calculate the FFT of i'th column
                 tempColumn = FFT(tempColumn);
                 //Assign the column to columnsFFT, after calculating its FFT
-                for(int z = 0; z < 128; z++)
+                for(int z = 0; z < N; z++)
                 {
                     columnsFFT[z, i] = tempColumn[z];
                 }
@@ -2473,7 +2476,7 @@ namespace Processor
             for(int i = 0; i < N; i++)
             {
                 //Put the values from i'th row in tempRow, so we can perform the FFT on its entirety 
-                var tempRow = new Complex[128];
+                var tempRow = new Complex[M];
                 for(int j = 0; j < M; j++)
                 {
                     tempRow[j] = columnsFFT[i, j];
