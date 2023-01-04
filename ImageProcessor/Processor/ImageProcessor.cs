@@ -2256,7 +2256,7 @@ namespace Processor
         
         public static void DFT(Bitmap image, string savePath)
         {
-
+        
             // BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
             //byte[] pixelValues = new byte[3 * 3];
             //double N = 9;
@@ -2284,6 +2284,7 @@ namespace Processor
             //return;
             for (int i = 0; i < height; i++)
             {
+                
                 for(int j = 0; j < width; j++)
                 {
                     for(int k = 0; k < width; k++)
@@ -2443,6 +2444,8 @@ namespace Processor
                 output[i] = evenFFT[i] + w * oddFFT[i];
                 output[i + n / 2] = evenFFT[i] - w * oddFFT[i];
             }
+            
+           
 
             return output;
         }
@@ -2493,6 +2496,31 @@ namespace Processor
             }
 
             return output;
+        }
+
+        public static Complex[] InverseFFT(Complex[] input)
+        {
+            Complex n = new Complex(input.Length, 0);
+            Complex buffer;
+            
+            ///Compute Forward FFT
+            Complex[] transformed = FFT(input);
+            
+            ///Divide each result by N (amount of elements)
+            for (int x = 0; x < transformed.Length; x++)
+            {
+                transformed[x] = Complex.Divide(transformed[x], n);
+            }
+            
+            ///Reverse elements in the array omitting the first one 
+            for (int x = 1; x < transformed.Length / 2; x++)
+            {
+                buffer = transformed[transformed.Length - x];
+                transformed[input.Length - x] = new Complex(transformed[x].Real,transformed[x].Imaginary);
+                transformed[x] = buffer;
+            }
+            
+            return transformed;
         }
     }
 }
