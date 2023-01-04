@@ -2522,5 +2522,54 @@ namespace Processor
             
             return transformed;
         }
+
+        public static Complex[,] InverseFFT2D(Complex[,] input)
+        {
+            int N = input.GetLength(0);
+            int M = input.GetLength(1);
+            
+            Complex[,] output = new Complex[N, M];
+            Complex[,] columnsInverseFFT = new Complex[N, M];
+            
+            //Perform InverseFFT over the columns of the input
+            for(int i = 0; i < M; i++)
+            {
+                //Put all the values from i'th column in the tempColumn variable
+                var tempColumn = new Complex[N];
+                for(int j = 0; j < N; j++)
+                {
+                    tempColumn[j] = input[j, i];    
+                }
+                //Calculate the InverseFFT of i'th column
+                tempColumn = InverseFFT(tempColumn);
+                //Assign the column to columns InverseFFT, after calculating its InverseFFT
+                for(int z = 0; z < N; z++)
+                {
+                    columnsInverseFFT[z, i] = tempColumn[z];
+                }
+            }
+            
+            //Perform InverseFFT over the rows of the columns InverseFFT
+            for(int i = 0; i < N; i++)
+            {
+                //Put the values from i'th row in tempRow, so we can perform the InverseFFT on its entirety 
+                var tempRow = new Complex[M];
+                for(int j = 0; j < M; j++)
+                {
+                    tempRow[j] = columnsInverseFFT[i, j];
+                }
+                //Calculate the InverseFFT on tempRow
+                tempRow = InverseFFT(tempRow);
+                //Assign the tempRow to the output
+                for(int z = 0; z < M; z++)
+                {
+                    if (i == 0)
+                        Console.WriteLine(tempRow[z].Real);
+                    output[i, z] = tempRow[z];
+                }
+            }
+
+            return output;
+        }
     }
 }
