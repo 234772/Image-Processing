@@ -98,8 +98,10 @@ namespace Processor
         public int lowpass { get; set; }
         [Option(longName: "highpass", Required = false, HelpText = "Return the image after applying the high pass filter", Default = 1000)]
         public int highpass { get; set; }
-        [Option(longName: "bandpass", Required = false, HelpText = "Return the image after applying the band pass filter", Default = null)]
+        [Option(longName: "bandpass", Required = false, HelpText = "Return the image after applying the band-pass filter", Default = null)]
         public IEnumerable<int> bandpass { get; set; }
+        [Option(longName: "bandcut", Required = false, HelpText = "Return the image after applying the band-cut filter", Default = null)]
+        public IEnumerable<int> bandcut { get; set; }
 
         public enum Channel
         {

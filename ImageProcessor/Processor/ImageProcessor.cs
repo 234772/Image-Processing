@@ -152,6 +152,12 @@ namespace Processor
 
                 BandPassFilter(ih.Bmp, o.secondPath, frequencies[0], frequencies[1]);
             }
+            if(o.bandcut.Any())
+            {
+                List<int> frequencies = new List<int>(o.bandcut);
+
+                BandCutFilter(ih.Bmp, o.secondPath, frequencies[0], frequencies[1]);
+            }
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -2553,8 +2559,6 @@ namespace Processor
                 //Assign the tempRow to the output
                 for(int z = 0; z < M; z++)
                 {
-                    if (i == 0)
-                        Console.WriteLine(tempRow[z].Real);
                     output[i, z] = tempRow[z];
                 }
             }
@@ -2691,6 +2695,31 @@ namespace Processor
                         );
 
                     if (distance < lowFrequencyThreshold || distance > highFrequencyThreshold)
+                    {
+                        fft[i, j] = new Complex(0, fft[i, j].Phase);
+                    }
+                }
+            }
+            RepresentIFFTAsImage(fft, savePath);
+        }
+        private static void BandCutFilter(Bitmap image, string savePath, int lowFrequencyThreshold, int highFrequencyThreshold)
+        {
+            Complex[,] fft = FFT2D(image);
+            fft = SwapQuarters(fft);
+
+            int width = fft.GetLength(0);
+            int height = fft.GetLength(1);
+
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    double distance = Math.Sqrt(
+                        Math.Pow((i - height / 2), 2) +
+                        Math.Pow((j - width / 2), 2)
+                        );
+
+                    if (distance <= lowFrequencyThreshold && distance >= highFrequencyThreshold)
                     {
                         fft[i, j] = new Complex(0, fft[i, j].Phase);
                     }
