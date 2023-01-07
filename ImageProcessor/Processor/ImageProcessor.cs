@@ -138,6 +138,10 @@ namespace Processor
             {
                 RepresentFFTAsImage(ih.Bmp, o.secondPath);
             }
+            if(o.lowpass)
+            {
+                //RepresentIFFTAsImage(FFT2D(ih.Bmp), o.secondPath)
+            }
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -2276,12 +2280,6 @@ namespace Processor
             double[,] real = new double[height, width];
             double[,] imaginary = new double[height, width];
             double[,] magnitude = new double[height, width];
-            //for (int i = 0; i < width; i++)
-            //{
-            //    Console.Write(image.GetPixel(i, 1).R + ",");
-            //}
-            //Console.WriteLine();
-            //return;
             for (int i = 0; i < height; i++)
             {
                 
@@ -2292,8 +2290,6 @@ namespace Processor
                         real[i, j] += image.GetPixel(i, k).R * Math.Cos(-2 * Math.PI * j * k / width);
                         imaginary[i, j] += image.GetPixel(i, k).R * Math.Sin(-2 * Math.PI * j * k / width);
                     }
-                    //real[i, j] = real[i, j] / width;
-                    //imaginary[i, j] = imaginary[i, j] / width;
                 }
             }
 
@@ -2308,8 +2304,6 @@ namespace Processor
                         real[i, j] += tempReal * Math.Cos(-2 * Math.PI * j * k / width) - tempImaginary * Math.Sin(-2 * Math.PI * j * k / width);
                         imaginary[i, j] += tempReal * Math.Sin(-2 * Math.PI * j * k / width) + tempImaginary * Math.Cos(-2 * Math.PI * j * k / width);
                     }
-                    //real[i, j] = real[i, j] / width;
-                    //imaginary[i, j] = imaginary[i, j] / width;
                 }
             }
 
@@ -2336,8 +2330,6 @@ namespace Processor
             int M = image.Width;
             int N = image.Height;
 
-            //double[,] real = new double[N, M];
-            //double[,] imaginary = new double[N, M];
             double[,] magnitude = new double[N, M];
 
             Complex[,] dft = new Complex[N, M];
@@ -2378,18 +2370,18 @@ namespace Processor
             int height = image.Height;
             Bitmap res = new Bitmap(width, height);
 
-            Complex[,] input = new Complex[width, height];
+            //Complex[,] input = new Complex[width, height];
             Complex[,] output;
 
-            for (int i = 0; i < image.Height; i++)
-            {
-                for (int j = 0; j < image.Width; j++)
-                {
-                    input[i, j] = image.GetPixel(j, i).R;
-                }
-            }
+            //for (int i = 0; i < image.Height; i++)
+            //{
+            //    for (int j = 0; j < image.Width; j++)
+            //    {
+            //        input[i, j] = image.GetPixel(j, i).R;
+            //    }
+            //}
 
-            output = FFT2D(input);
+            output = FFT2D(image);
             output = SwapQuarters(output);
 
             int pixel;
@@ -2397,7 +2389,6 @@ namespace Processor
             {
                 for (int j = 0; j < image.Width; j++)
                 {
-                    //pixel = Clamp((int)Math.Log(Math.Sqrt(Math.Pow(output[i, j].Real, 2) + Math.Pow(output[i, j].Imaginary, 2)), 1.07));
                     pixel = (int)output[i, j].Magnitude;
                     pixel = Clamp((int)Math.Log(pixel, 1.07));
                     res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
@@ -2451,16 +2442,27 @@ namespace Processor
 
             return output;
         }
-        public static Complex[,] FFT2D(Complex[,] input)
+        public static Complex[,] FFT2D(Bitmap image)
         {
-            int N = input.GetLength(0);
-            int M = input.GetLength(1);
+            int N = image.Width;
+            int M = image.Height;
 
             Complex[,] output = new Complex[N, M];
             Complex[,] columnsFFT = new Complex[N, M];
 
+            Complex[,] input = new Complex[N, M];
+
+            //Convert the image to table of complex numbers
+            for (int i = 0; i < image.Height; i++)
+            {
+                for (int j = 0; j < image.Width; j++)
+                {
+                    input[i, j] = image.GetPixel(j, i).R;
+                }
+            }
+
             //Perform FFT over the columns of the input
-            for(int i = 0; i < M; i++)
+            for (int i = 0; i < M; i++)
             {
                 //Put all the values from i'th column in the tempColumn variable
                 var tempColumn = new Complex[N];
@@ -2500,7 +2502,7 @@ namespace Processor
             return output;
         }
 
-        public static Complex[] InverseFFT(Complex[] input)
+        public static Complex[] IFFT(Complex[] input)
         {
             Complex n = new Complex(input.Length, 0);
             Complex buffer;
@@ -2525,7 +2527,7 @@ namespace Processor
             return transformed;
         }
 
-        public static Complex[,] InverseFFT2D(Complex[,] input)
+        public static Complex[,] IFFT2D(Complex[,] input)
         {
             int N = input.GetLength(0);
             int M = input.GetLength(1);
@@ -2533,7 +2535,7 @@ namespace Processor
             Complex[,] output = new Complex[N, M];
             Complex[,] columnsInverseFFT = new Complex[N, M];
             
-            //Perform InverseFFT over the columns of the input
+            //Perform IFFT over the columns of the input
             for(int i = 0; i < M; i++)
             {
                 //Put all the values from i'th column in the tempColumn variable
@@ -2542,26 +2544,26 @@ namespace Processor
                 {
                     tempColumn[j] = input[j, i];    
                 }
-                //Calculate the InverseFFT of i'th column
-                tempColumn = InverseFFT(tempColumn);
-                //Assign the column to columns InverseFFT, after calculating its InverseFFT
+                //Calculate the IFFT of i'th column
+                tempColumn = IFFT(tempColumn);
+                //Assign the column to columns IFFT, after calculating its IFFT
                 for(int z = 0; z < N; z++)
                 {
                     columnsInverseFFT[z, i] = tempColumn[z];
                 }
             }
             
-            //Perform InverseFFT over the rows of the columns InverseFFT
+            //Perform IFFT over the rows of the columns IFFT
             for(int i = 0; i < N; i++)
             {
-                //Put the values from i'th row in tempRow, so we can perform the InverseFFT on its entirety 
+                //Put the values from i'th row in tempRow, so we can perform the IFFT on its entirety 
                 var tempRow = new Complex[M];
                 for(int j = 0; j < M; j++)
                 {
                     tempRow[j] = columnsInverseFFT[i, j];
                 }
-                //Calculate the InverseFFT on tempRow
-                tempRow = InverseFFT(tempRow);
+                //Calculate the IFFT on tempRow
+                tempRow = IFFT(tempRow);
                 //Assign the tempRow to the output
                 for(int z = 0; z < M; z++)
                 {
@@ -2611,6 +2613,33 @@ namespace Processor
             }
 
             return output;
+        }
+        public static Bitmap RepresentIFFTAsImage(Complex[,] input, string savePath)
+        {
+            int width = input.GetLength(0);
+            int height = input.GetLength(1);
+
+            Bitmap res = new Bitmap(width, height);
+
+            Complex[,] output;
+
+            output = IFFT2D(input);
+
+            int pixel;
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    pixel = (int)output[i, j].Magnitude;
+                    res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
+                }
+            }
+            ih.saveImage(res, savePath);
+            return res;
+        }
+        public static void LowPassFilter(Bitmap image, string savePath)
+        {
+
         }
     }
 }
