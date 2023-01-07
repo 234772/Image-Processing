@@ -2390,6 +2390,7 @@ namespace Processor
             }
 
             output = FFT2D(input);
+            output = SwapQuarters(output);
 
             int pixel;
             for (int i = 0; i < image.Height; i++)
@@ -2397,7 +2398,6 @@ namespace Processor
                 for (int j = 0; j < image.Width; j++)
                 {
                     pixel = Clamp((int)Math.Log(Math.Sqrt(Math.Pow(output[i, j].Real, 2) + Math.Pow(output[i, j].Imaginary, 2)), 1.07));
-                    //Console.WriteLine(pixel);
                     res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
                 }
             }
@@ -2566,6 +2566,45 @@ namespace Processor
                     if (i == 0)
                         Console.WriteLine(tempRow[z].Real);
                     output[i, z] = tempRow[z];
+                }
+            }
+
+            return output;
+        }
+        public static Complex[,] SwapQuarters(Complex[,] fft)
+        {
+            int width = fft.GetLength(0);
+            int height = fft.GetLength(1);
+
+            Complex[,] output = new Complex[width, height];
+
+            int quarterWidth = width / 2;
+            int quarterHeight = height / 2; 
+
+            Complex[,] q1 = new Complex[quarterHeight, quarterWidth];
+            Complex[,] q2 = new Complex[quarterHeight, quarterWidth];
+            Complex[,] q3 = new Complex[quarterHeight, quarterWidth];
+            Complex[,] q4 = new Complex[quarterHeight, quarterWidth];
+
+            for( int i = 0; i < quarterHeight; i++)
+            {
+                for( int j = 0; j < quarterWidth; j++)
+                {
+                    q1[i, j] = fft[i, j];
+                    q2[i, j] = fft[i, j + quarterWidth];
+                    q3[i, j] = fft[i + quarterHeight, j];
+                    q4[i, j] = fft[i + quarterHeight, j + quarterWidth];
+                }
+            }
+
+            for (int i = 0; i < quarterHeight; i++)
+            {
+                for (int j = 0; j < quarterWidth; j++)
+                {
+                    output[i, j] = q4[i, j];
+                    output[i + quarterHeight, j + quarterWidth] = q1[i, j];
+                    output[i + quarterHeight, j] = q2[i, j];
+                    output[i, j + quarterWidth] = q3[i, j];
                 }
             }
 
