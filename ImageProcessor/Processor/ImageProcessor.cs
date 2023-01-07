@@ -146,6 +146,12 @@ namespace Processor
             {
                 HighPassFilter(ih.Bmp, o.secondPath, o.highpass);
             }
+            if(o.bandpass.Any())
+            {
+                List<int> frequencies = new List<int>(o.bandpass);
+
+                BandPassFilter(ih.Bmp, o.secondPath, frequencies[0], frequencies[1]);
+            }
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -2660,6 +2666,31 @@ namespace Processor
                         );
 
                     if (distance <= cutOff)
+                    {
+                        fft[i, j] = new Complex(0, fft[i, j].Phase);
+                    }
+                }
+            }
+            RepresentIFFTAsImage(fft, savePath);
+        }
+        private static void BandPassFilter(Bitmap image, string savePath, int lowFrequencyThreshold, int highFrequencyThreshold)
+        {
+            Complex[,] fft = FFT2D(image);
+            fft = SwapQuarters(fft);
+
+            int width = fft.GetLength(0);
+            int height = fft.GetLength(1);
+
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    double distance = Math.Sqrt(
+                        Math.Pow((i - height / 2), 2) +
+                        Math.Pow((j - width / 2), 2)
+                        );
+
+                    if (distance < lowFrequencyThreshold || distance > highFrequencyThreshold)
                     {
                         fft[i, j] = new Complex(0, fft[i, j].Phase);
                     }
