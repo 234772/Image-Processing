@@ -96,6 +96,8 @@ namespace Processor
         public bool ifft { get; set; }
         [Option(longName: "lowpass", Required = false, HelpText = "Return the image after applying the low pass filter", Default = 1000)]
         public int lowpass { get; set; }
+        [Option(longName: "highpass", Required = false, HelpText = "Return the image after applying the high pass filter", Default = 1000)]
+        public int highpass { get; set; }
 
         public enum Channel
         {
