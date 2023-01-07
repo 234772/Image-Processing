@@ -94,8 +94,8 @@ namespace Processor
         public bool fft { get; set; }
         [Option(longName: "ifft", Required = false, HelpText = "Returns the IFFT of a fourier transform, represented as an image.", Default = false)]
         public bool ifft { get; set; }
-        [Option(longName: "lowpass", Required = false, HelpText = "Return the image after applying the low pass filter", Default = false)]
-        public bool lowpass { get; set; }
+        [Option(longName: "lowpass", Required = false, HelpText = "Return the image after applying the low pass filter", Default = 1000)]
+        public int lowpass { get; set; }
 
         public enum Channel
         {

@@ -138,9 +138,9 @@ namespace Processor
             {
                 RepresentFFTAsImage(ih.Bmp, o.secondPath);
             }
-            if(o.lowpass)
+            if(o.lowpass != 1000)
             {
-                //RepresentIFFTAsImage(FFT2D(ih.Bmp), o.secondPath)
+                LowPassFilter(ih.Bmp, o.secondPath, o.lowpass);
             }
         }
         /// <summary>
@@ -2260,26 +2260,15 @@ namespace Processor
         
         public static void DFT(Bitmap image, string savePath)
         {
-        
-            // BitmapData bmpData = image.LockBits(new Rectangle(0, 0, image.Width, image.Height), ImageLockMode.ReadWrite, PixelFormat.Format24bppRgb);
-            //byte[] pixelValues = new byte[3 * 3];
-            //double N = 9;
-
-            //// int N = bmpData.Stride * image.Height;
-            //// Marshal.Copy(bmpData.Scan0, pixelValues, 0, image.Height * bmpData.Stride);
-            //double[] realPart = new double[3];
-            //double[] imaginaryPart = new double[3];
-            ////Numbers from AI
-            //int width = image.Width;
-            //int height = image.Height;
             int width = image.Width;
             int height = image.Height;
+
             Bitmap res = new Bitmap(width, height);
-            double[,] X = { { 100, 150, 200 }, { 120, 180, 220 }, { 140, 210, 240 } };
-            double twiddle;
+
             double[,] real = new double[height, width];
             double[,] imaginary = new double[height, width];
             double[,] magnitude = new double[height, width];
+
             for (int i = 0; i < height; i++)
             {
                 
@@ -2307,10 +2296,6 @@ namespace Processor
                 }
             }
 
-            for (int i = 0; i < width; i++)
-            {
-                Console.WriteLine(real[1, i]);
-            }
             int pixel;
             for(int i = 0; i < height; i++)
             {
@@ -2370,16 +2355,7 @@ namespace Processor
             int height = image.Height;
             Bitmap res = new Bitmap(width, height);
 
-            //Complex[,] input = new Complex[width, height];
             Complex[,] output;
-
-            //for (int i = 0; i < image.Height; i++)
-            //{
-            //    for (int j = 0; j < image.Width; j++)
-            //    {
-            //        input[i, j] = image.GetPixel(j, i).R;
-            //    }
-            //}
 
             output = FFT2D(image);
             output = SwapQuarters(output);
@@ -2637,9 +2613,30 @@ namespace Processor
             ih.saveImage(res, savePath);
             return res;
         }
-        public static void LowPassFilter(Bitmap image, string savePath)
+        public static void LowPassFilter(Bitmap image, string savePath, int cutOff)
         {
+            Complex[,] fft = FFT2D(image);
+            fft = SwapQuarters(fft);
 
+            int width = fft.GetLength(0);
+            int height = fft.GetLength(1);
+
+            for(int i = 0; i < height; i++)
+            {
+                for(int j = 0; j < width; j++)
+                {
+                    double distance = Math.Sqrt(
+                        Math.Pow((i - height / 2), 2) +
+                        Math.Pow((j - width / 2), 2)
+                        );
+
+                    if(distance > cutOff)
+                    {
+                        fft[i, j] = new Complex(0, fft[i, j].Phase);
+                    }
+                }
+            }
+            RepresentIFFTAsImage(fft, savePath);
         }
     }
 }
