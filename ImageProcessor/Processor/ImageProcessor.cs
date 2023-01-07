@@ -2397,7 +2397,9 @@ namespace Processor
             {
                 for (int j = 0; j < image.Width; j++)
                 {
-                    pixel = Clamp((int)Math.Log(Math.Sqrt(Math.Pow(output[i, j].Real, 2) + Math.Pow(output[i, j].Imaginary, 2)), 1.07));
+                    //pixel = Clamp((int)Math.Log(Math.Sqrt(Math.Pow(output[i, j].Real, 2) + Math.Pow(output[i, j].Imaginary, 2)), 1.07));
+                    pixel = (int)output[i, j].Magnitude;
+                    pixel = Clamp((int)Math.Log(pixel, 1.07));
                     res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
                 }
             }
