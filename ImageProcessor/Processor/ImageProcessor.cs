@@ -2749,9 +2749,9 @@ namespace Processor
                         Math.Pow((j - width / 2), 2)
                         );
 
-                    if (distance <= lowFrequencyThreshold && distance >= highFrequencyThreshold)
+                    if (distance >= lowFrequencyThreshold && distance <= highFrequencyThreshold)
                     {
-                        fft[i, j] = new Complex(0, fft[i, j].Phase);
+                        fft[i, j] = new Complex(0, 0);
                     }
                 }
             }
@@ -2823,7 +2823,7 @@ namespace Processor
                 }
             }
 
-            RepresentIFFTAsImage(fft, savePath);
+            RepresentFFTAsImage(fft, savePath);
         }
     }
 }
