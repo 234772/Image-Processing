@@ -164,6 +164,12 @@ namespace Processor
 
                 HighPassFilterWithEdgeDetection(ih.Bmp, o.secondPath, values[0], values[1]);
             }
+            if(o.phase.Any())
+            {
+                List<int> values = new List<int>(o.phase);
+
+                PhaseModifyingFilter(ih.Bmp, o.secondPath, values[0], values[1]);
+            }
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -2763,6 +2769,43 @@ namespace Processor
 
                 }
             }
+            RepresentIFFTAsImage(fft, savePath);
+        }
+        public static Complex[,] CalculatePhaseMask(int width, int height, int k, int l)
+        {
+            Complex[,] mask = new Complex[width, height];
+            Complex I = new Complex(0, 1);
+
+            for(int i = 0; i < height; i++)
+            {
+                for(int j = 0; j < width; j++)
+                {
+                    mask[i, j] = Complex.Exp(I * (((-1) * (i * k * 2 * Math.PI) / height) +
+                        ((-1) * (j * l * 2 * Math.PI) / width) + 
+                        (k + l) * Math.PI));
+                }
+            }
+
+            return mask;
+        }
+        public static void PhaseModifyingFilter(Bitmap image, string savePath, int k, int l)
+        {
+            int width = image.Width;
+            int height = image.Height;
+
+            Complex[,] mask = CalculatePhaseMask(width, height, k, l);
+            Complex[,] fft = FFT2D(image);
+
+            fft = SwapQuarters(fft);
+
+            for(int i = 0; i < height; i++)
+            {
+                for(int j = 0; j < width; j++)
+                {
+                    fft[i, j] *= mask[i, j];
+                }
+            }
+
             RepresentIFFTAsImage(fft, savePath);
         }
     }
