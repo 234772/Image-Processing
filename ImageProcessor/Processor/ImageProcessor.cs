@@ -2401,6 +2401,26 @@ namespace Processor
 
             ih.saveImage(res, savePath);
         }
+        public static void RepresentFFTAsImage(Complex[,] fft, string savePath)
+        {
+            int width = fft.GetLength(0);
+            int height = fft.GetLength(1);
+
+            Bitmap res = new Bitmap(width, height);
+
+            int pixel;
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    pixel = (int)fft[i, j].Magnitude;
+                    pixel = Clamp((int)Math.Log(pixel, 1.07));
+                    res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
+                }
+            }
+
+            ih.saveImage(res, savePath);
+        }
         public static Complex[] FFT(Complex[] input)
         {
             // Get the length of the input array
@@ -2783,7 +2803,6 @@ namespace Processor
                         (k + l) * Math.PI));
                 }
             }
-
             return mask;
         }
         public static void PhaseModifyingFilter(Bitmap image, string savePath, int k, int l)
