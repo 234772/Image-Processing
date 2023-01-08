@@ -102,6 +102,8 @@ namespace Processor
         public IEnumerable<int> bandpass { get; set; }
         [Option(longName: "bandcut", Required = false, HelpText = "Return the image after applying the band-cut filter", Default = null)]
         public IEnumerable<int> bandcut { get; set; }
+        [Option(longName: "edgehighpass", Required = false, HelpText = "Return the image after applying the high-pass with edge detection filter", Default = null)]
+        public IEnumerable<int> edgehighpass { get; set; }
 
         public enum Channel
         {
