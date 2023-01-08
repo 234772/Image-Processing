@@ -2442,8 +2442,6 @@ namespace Processor
                 output[i + n / 2] = evenFFT[i] - w * oddFFT[i];
             }
             
-           
-
             return output;
         }
         public static Complex[,] FFT2D(Bitmap image)
@@ -2708,7 +2706,7 @@ namespace Processor
 
                     if (distance < lowFrequencyThreshold || distance > highFrequencyThreshold)
                     {
-                        fft[i, j] = new Complex(0, fft[i, j].Phase);
+                        fft[i, j] = new Complex(0, 0);
                     }
                 }
             }
