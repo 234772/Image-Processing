@@ -173,8 +173,8 @@ namespace Processor
             }
             if (o.generateMask.Any())
             {
-                List<int> values = new List<int>(o.phase);
-                generateMask(512,512,values[0],values[0]);
+                List<int> values = new List<int>(o.generateMask);
+                generateMask(512,512,values[0],values[1], values[2]);
             }
         }
         /// <summary>
@@ -2832,36 +2832,51 @@ namespace Processor
             RepresentFFTAsImage(fft, savePath);
         }
 
-        public static void generateMask(int width, int height, int circleRadius, int angle)
+        public static void generateMask(int width, int height, int circleRadius, int angle, int rotationAngle)
         {
             Bitmap bmp = new Bitmap(width, height);
-
+            
+            for(int x = 0; x <  width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                bmp.SetPixel(x,y,Color.Black);
+            }
             // Create a graphics object from the bitmap
             Graphics g = Graphics.FromImage(bmp);
 
             // Set the smoothing mode for the graphics object
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
-            // Draw the circle
-            g.DrawEllipse(Pens.Black, width / 2 - circleRadius / 2, height / 2 - circleRadius / 2, circleRadius, circleRadius);
-            // Create a pen for the lines
-            Pen pen = new Pen(Color.Black, 2);
-
-            // float halfDistanceBetweenPoints = (float)Math.Tan(angle / 2 * width / 2);
-            float halfDistanceBetweenPoints = 80;
-            // Calculate the start and end points of the lines
-            PointF start1 = new PointF(0, height / 2 - halfDistanceBetweenPoints);
-            PointF end1 = new PointF(width, height / 2 + halfDistanceBetweenPoints);
-            PointF start2 = new PointF(0, height / 2 + halfDistanceBetweenPoints);
-            PointF end2 = new PointF(width, height / 2 - halfDistanceBetweenPoints);
+            // Rotate the polygons
+            g.TranslateTransform(width / 2, height / 2);
+            g.RotateTransform(rotationAngle);
+            g.TranslateTransform(-width / 2, -height / 2);
             
-  
+            Pen pen = new Pen(Color.White, 2);
+            
+            int halfDistanceBetweenPoints = (int)(Math.Tan( (Math.PI / 180) * angle / 2) * width / 2);
+       
+            // Calculate the start and end points of the lines
+            Point start1 = new Point(0, height / 2 - halfDistanceBetweenPoints);
+            Point end1 = new Point(width, height / 2 + halfDistanceBetweenPoints );
+            Point start2 = new Point(0, height / 2 + halfDistanceBetweenPoints );
+            Point end2 = new Point(width, height / 2 - halfDistanceBetweenPoints );
+            //
+
+            Brush whiteBrush = new SolidBrush(Color.White);
+
+            Point[] firstTriangle = { new Point(width / 2, height / 2), end1, end2 };
+            Point[] secondTriangle = { new Point(width / 2, height / 2), start1, start2 };
+
+            g.FillPolygon(whiteBrush,firstTriangle);
+            g.FillPolygon(whiteBrush,secondTriangle);
+            g.FillEllipse(Brushes.Black, new Rectangle(width/2 - circleRadius/2, height/2 - circleRadius/2, circleRadius, circleRadius));
             // Draw the lines
-            g.DrawLine(pen, start1, end1);
-            g.DrawLine(pen, start2, end2);
-            IntPtr ptr = g.GetHdc();
+       
+            // g.TranslateTransform(width / 2, height / 2);
+            // g.TranslateTransform(-width / 2, -height / 2);
+            
             bmp.Save("Result",System.Drawing.Imaging.ImageFormat.Bmp);
-            g.ReleaseHdc();
             
             // Save the bitmap to a file
             ih.saveImage(bmp,"result.bmp");
