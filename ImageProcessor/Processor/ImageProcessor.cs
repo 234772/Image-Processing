@@ -2849,11 +2849,11 @@ namespace Processor
             Pen pen = new Pen(Color.Black, 2);
 
             // Calculate the start and end points of the lines
-            PointF start1 = new PointF(width / 2, height / 2 - 200);
-            PointF end1 = new PointF(width / 2, height / 2 + 200);
-            PointF start2 = new PointF(width / 2 - 200, height / 2);
-            PointF end2 = new PointF(width / 2 + 200, height / 2);
-
+            PointF start1 = new PointF(0, height / 2 - 200);
+            PointF end1 = new PointF(width, height / 2 + 200);
+            PointF start2 = new PointF(0, height / 2);
+            PointF end2 = new PointF(width, height / 2);
+            
             // Rotate the lines by the specified angle
             g.TranslateTransform(width / 2, height / 2);
             g.RotateTransform(angle);
@@ -2873,7 +2873,7 @@ namespace Processor
             g.Dispose();
             bmp.Dispose();
         
-    }
-        
+        }
+
     }
 }
