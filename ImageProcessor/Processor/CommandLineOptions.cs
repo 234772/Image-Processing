@@ -106,6 +106,8 @@ namespace Processor
         public IEnumerable<int> edgehighpass { get; set; }
         [Option(longName: "phase", Required = false, HelpText = "Return the image after applying the phase modifying filter.", Default = null)]
         public IEnumerable<int> phase { get; set; }
+        [Option(longName: "generatemask", Required = false, HelpText = "Return the image after applying the high-pass with edge detection filter", Default = null)]
+        public bool generateMask { get; set; }
 
         public enum Channel
         {

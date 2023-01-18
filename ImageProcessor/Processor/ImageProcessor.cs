@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data.Common;
 using System.Data.OleDb;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Linq;
 using System.Numerics;
@@ -169,6 +170,10 @@ namespace Processor
                 List<int> values = new List<int>(o.phase);
 
                 PhaseModifyingFilter(ih.Bmp, o.secondPath, values[0], values[1]);
+            }
+            if (o.generateMask)
+            {
+                generateMask(400,400,20,40);
             }
         }
         /// <summary>
@@ -2825,5 +2830,50 @@ namespace Processor
 
             RepresentFFTAsImage(fft, savePath);
         }
+
+        public static void generateMask(int height, int width, int circleRadius, int angle)
+        {
+
+            Bitmap bmp = new Bitmap(width, height);
+
+            // Create a graphics object from the bitmap
+            Graphics g = Graphics.FromImage(bmp);
+
+            // Set the smoothing mode for the graphics object
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            // Draw the circle
+            g.DrawEllipse(Pens.Black, width / 2 - 50, height / 2 - 50, 100, 100);
+
+            // Create a pen for the lines
+            Pen pen = new Pen(Color.Black, 2);
+
+            // Calculate the start and end points of the lines
+            PointF start1 = new PointF(width / 2, height / 2 - 200);
+            PointF end1 = new PointF(width / 2, height / 2 + 200);
+            PointF start2 = new PointF(width / 2 - 200, height / 2);
+            PointF end2 = new PointF(width / 2 + 200, height / 2);
+
+            // Rotate the lines by the specified angle
+            g.TranslateTransform(width / 2, height / 2);
+            g.RotateTransform(angle);
+            g.TranslateTransform(-width / 2, -height / 2);
+
+            // Draw the lines
+            g.DrawLine(pen, start1, end1);
+            g.DrawLine(pen, start2, end2);
+            IntPtr ptr = g.GetHdc();
+            bmp.Save("Result",System.Drawing.Imaging.ImageFormat.Bmp);
+            g.ReleaseHdc();
+            
+            // Save the bitmap to a file
+            ih.saveImage(bmp,"result.bmp");
+
+            // Clean up
+            g.Dispose();
+            bmp.Dispose();
+        
+    }
+        
     }
 }
