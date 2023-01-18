@@ -171,9 +171,10 @@ namespace Processor
 
                 PhaseModifyingFilter(ih.Bmp, o.secondPath, values[0], values[1]);
             }
-            if (o.generateMask)
+            if (o.generateMask.Any())
             {
-                generateMask(400,400,20,40);
+                List<int> values = new List<int>(o.phase);
+                generateMask(512,512,values[0],values[0]);
             }
         }
         /// <summary>
@@ -2831,9 +2832,8 @@ namespace Processor
             RepresentFFTAsImage(fft, savePath);
         }
 
-        public static void generateMask(int height, int width, int circleRadius, int angle)
+        public static void generateMask(int width, int height, int circleRadius, int angle)
         {
-
             Bitmap bmp = new Bitmap(width, height);
 
             // Create a graphics object from the bitmap
@@ -2843,22 +2843,19 @@ namespace Processor
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
             // Draw the circle
-            g.DrawEllipse(Pens.Black, width / 2 - 50, height / 2 - 50, 100, 100);
-
+            g.DrawEllipse(Pens.Black, width / 2 - circleRadius / 2, height / 2 - circleRadius / 2, circleRadius, circleRadius);
             // Create a pen for the lines
             Pen pen = new Pen(Color.Black, 2);
 
+            // float halfDistanceBetweenPoints = (float)Math.Tan(angle / 2 * width / 2);
+            float halfDistanceBetweenPoints = 80;
             // Calculate the start and end points of the lines
-            PointF start1 = new PointF(0, height / 2 - 200);
-            PointF end1 = new PointF(width, height / 2 + 200);
-            PointF start2 = new PointF(0, height / 2);
-            PointF end2 = new PointF(width, height / 2);
+            PointF start1 = new PointF(0, height / 2 - halfDistanceBetweenPoints);
+            PointF end1 = new PointF(width, height / 2 + halfDistanceBetweenPoints);
+            PointF start2 = new PointF(0, height / 2 + halfDistanceBetweenPoints);
+            PointF end2 = new PointF(width, height / 2 - halfDistanceBetweenPoints);
             
-            // Rotate the lines by the specified angle
-            g.TranslateTransform(width / 2, height / 2);
-            g.RotateTransform(angle);
-            g.TranslateTransform(-width / 2, -height / 2);
-
+  
             // Draw the lines
             g.DrawLine(pen, start1, end1);
             g.DrawLine(pen, start2, end2);
