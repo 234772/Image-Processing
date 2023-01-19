@@ -2832,10 +2832,12 @@ namespace Processor
             RepresentFFTAsImage(fft, savePath);
         }
 
+        /// <summary>
+        /// Generates mask with a specified radius of a circle and angle between the straight lines. It's possible to rotate the mask.
+        /// </summary>
         public static void generateMask(int width, int height, int circleRadius, int angle, int rotationAngle)
         {
             Bitmap bmp = new Bitmap(width, height);
-            
             for(int x = 0; x <  width; x++)
             for (int y = 0; y < height; y++)
             {
@@ -2843,33 +2845,161 @@ namespace Processor
             }
             // Create a graphics object from the bitmap
             Graphics g = Graphics.FromImage(bmp);
-
+            
             // Set the smoothing mode for the graphics object
             g.SmoothingMode = SmoothingMode.AntiAlias;
 
+            // Calculate the start and end points of the lines
+            int halfDistanceBetweenPoints = (int)(Math.Tan( (Math.PI / 180) * angle / 2) * width / 2);
+            Point left2 = new Point(0, height / 2 - halfDistanceBetweenPoints);
+            Point right1 = new Point(width, height / 2 + halfDistanceBetweenPoints );
+            Point left1 = new Point(0, height / 2 + halfDistanceBetweenPoints );
+            Point right2 = new Point(width, height / 2 - halfDistanceBetweenPoints);
+
+            double tanAlfa = Math.Round((double)(height / 2) / (width / 2),2 ,MidpointRounding.ToEven);
+            double tanBeta = Math.Round((double)(width / 2) / (height / 2),2 ,MidpointRounding.ToEven);
+            int alfaAngle = 0, betaAngle = 0;
+            for (int x = 0; x < 90; x++)
+            {
+                if (Math.Round(Math.Tan((Math.PI / 180) * x), 2, MidpointRounding.ToEven) == tanAlfa)
+                {
+                    alfaAngle = x;
+                }
+                
+                if (Math.Round(Math.Tan((Math.PI / 180) * x), 2, MidpointRounding.ToEven) == tanBeta)
+                {
+                    betaAngle = x;
+                }
+            }
+
+            float verticalDistanceToChangeAngleByOne = ((float)height / 2)/ alfaAngle;
+            float horizontalDistanceToChangeAngleByOne = ((float)width /2) / betaAngle;
+            
+            // First right point vertical repositioning
+            float verticalDistanceLeft = height/2 - halfDistanceBetweenPoints;
+            float verticalRotation = (verticalDistanceLeft / verticalDistanceToChangeAngleByOne);
+
+            Console.WriteLine(left1.X + " " + left1.Y);
+            Console.WriteLine(left2.X + " " + left2.Y);
+            if (rotationAngle < verticalRotation)
+            {
+                right1.Y = (int)(right1.Y + rotationAngle * verticalDistanceToChangeAngleByOne);
+            }
+            else if (rotationAngle > verticalRotation)
+            {
+                right1.Y = (int)(right1.Y + verticalRotation * verticalDistanceToChangeAngleByOne);
+                float remainingRotationAngle = (rotationAngle - verticalRotation);
+                
+                // First right point horizontal repositioning
+                right1.X = (int)(right1.X - remainingRotationAngle * horizontalDistanceToChangeAngleByOne);
+
+            }
+            
+            // Second right point vertical repositioning
+            verticalDistanceLeft = height / 2 + halfDistanceBetweenPoints;
+            verticalRotation = (verticalDistanceLeft / verticalDistanceToChangeAngleByOne);
+            
+            if (rotationAngle < verticalRotation)
+            {
+                right2.Y = (int)(right2.Y + rotationAngle * verticalDistanceToChangeAngleByOne);
+            }
+            else if (rotationAngle > verticalRotation)
+            {
+                right2.Y = (int)(right2.Y + verticalRotation * verticalDistanceToChangeAngleByOne);
+                float remainingRotationAngle = (rotationAngle - verticalRotation);
+                
+                // Second right point horizontal repositioning       
+                right2.X = (int)(right2.X - remainingRotationAngle * horizontalDistanceToChangeAngleByOne);
+            }
+            
+            // First left point vertical repositioning
+            verticalDistanceLeft = height / 2  + halfDistanceBetweenPoints;
+            verticalRotation = (verticalDistanceLeft / verticalDistanceToChangeAngleByOne);
+            
+            if (rotationAngle < verticalRotation)
+            {
+                left1.Y = (int)(left1.Y - rotationAngle * verticalDistanceToChangeAngleByOne);
+            }
+            else if (rotationAngle > verticalRotation)
+            {
+                left1.Y = (int)(left1.Y - verticalRotation * verticalDistanceToChangeAngleByOne);
+                float remainingRotationAngle = rotationAngle - verticalRotation;
+                
+                // First left point horizontal repositioning       
+                left1.X = (int)(left1.X + remainingRotationAngle * horizontalDistanceToChangeAngleByOne);
+            }
+            
+            // Second left point vertical repositioning
+            verticalDistanceLeft = height / 2  - halfDistanceBetweenPoints;
+            verticalRotation = (verticalDistanceLeft / verticalDistanceToChangeAngleByOne);
+            
+            if (rotationAngle < verticalRotation)
+            {
+                left2.Y = (int)(left2.Y - rotationAngle * verticalDistanceToChangeAngleByOne);
+            }
+            else if (rotationAngle > verticalRotation)
+            {
+                left2.Y = (int)(left2.Y - verticalRotation * verticalDistanceToChangeAngleByOne);
+                float remainingRotationAngle = rotationAngle - verticalRotation;
+                
+                // Second left point horizontal repositioning       
+                left2.X = (int)(left2.X + remainingRotationAngle * horizontalDistanceToChangeAngleByOne);
+            }
+            
+            Console.WriteLine(left1.X + " " + left1.Y);
+            Console.WriteLine(left2.X + " " + left2.Y);
+            Point fourthPoint = new Point(-1, -1);
+            Point[] firstShape;
+            Point[] secondShape;
+            // Check if one of the points is on the other axis
+            if (right1.Y == right2.X && right1.X != right2.X)
+            {
+                // In that case create 4th point to fill the resulting space
+                if (right1.Y == height && right2.X == width)
+                {
+                    fourthPoint = new Point(width, height);
+                    firstShape = new Point[]{ new Point(width / 2, height / 2), right1, fourthPoint, right2};
+                }
+                else if (right1.X == 0 && right2.Y == height)
+                {
+                    fourthPoint = new Point(0, height);
+                    firstShape = new Point[]{ new Point(width / 2, height / 2), right1, fourthPoint, right2};
+                }
+                else
+                {
+                    firstShape = new Point[]{ new Point(width / 2, height / 2), right1, right2};
+                }
+                if (left2.Y == 0 && left1.X == 0)
+                {
+                    
+                    fourthPoint = new Point(0, 0);
+                    secondShape = new Point[]{ new Point(width / 2, height / 2), left1, fourthPoint, left2};
+                }
+                else
+                {
+                    secondShape = new Point[] { new Point(width / 2, height / 2), left2, left1 };
+                }
+              
+              
+            }
+            else
+            {
+                  firstShape = new Point[]{ new Point(width / 2, height / 2), right1, right2 };
+                  secondShape = new Point[] { new Point(width / 2, height / 2), left2, left1 };
+            }
+            
             // Rotate the polygons
-            g.TranslateTransform(width / 2, height / 2);
-            g.RotateTransform(rotationAngle);
-            g.TranslateTransform(-width / 2, -height / 2);
+            CoordinateSpace a;
+            // g.TranslateTransform(width / 2, height / 2);
+            // g.RotateTransform(rotationAngle);
+            // g.TranslateTransform(-width / 2, -height / 2);
             
             Pen pen = new Pen(Color.White, 2);
-            
-            int halfDistanceBetweenPoints = (int)(Math.Tan( (Math.PI / 180) * angle / 2) * width / 2);
-       
-            // Calculate the start and end points of the lines
-            Point start1 = new Point(0, height / 2 - halfDistanceBetweenPoints);
-            Point end1 = new Point(width, height / 2 + halfDistanceBetweenPoints );
-            Point start2 = new Point(0, height / 2 + halfDistanceBetweenPoints );
-            Point end2 = new Point(width, height / 2 - halfDistanceBetweenPoints );
-            //
 
             Brush whiteBrush = new SolidBrush(Color.White);
 
-            Point[] firstTriangle = { new Point(width / 2, height / 2), end1, end2 };
-            Point[] secondTriangle = { new Point(width / 2, height / 2), start1, start2 };
-
-            g.FillPolygon(whiteBrush,firstTriangle);
-            g.FillPolygon(whiteBrush,secondTriangle);
+            g.FillPolygon(whiteBrush,firstShape);
+            g.FillPolygon(whiteBrush,secondShape);
             g.FillEllipse(Brushes.Black, new Rectangle(width/2 - circleRadius/2, height/2 - circleRadius/2, circleRadius, circleRadius));
             // Draw the lines
        
