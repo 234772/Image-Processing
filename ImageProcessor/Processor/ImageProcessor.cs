@@ -1,9 +1,13 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data.Common;
 using System.Data.OleDb;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -117,9 +121,61 @@ namespace Processor
                 List<int> m3 = new List<int>(o.m3);
                 M3(ih.Bmp, o.secondPath, m3[0], m3[1], m3[2]);
             }
-            if (o.region)
-                RegionGrowing(ih.Bmp, o.secondPath);
+            if (o.region.Any())
+            {
+                List<int> region = new List<int>(o.region);
+                int threshold = region[0];
+                region.RemoveAt(0);
+                if (region.Count % 2 == 0)
+                    RegionGrowing(ih.Bmp, o.secondPath, threshold, region);
+                else
+                    Console.WriteLine("Wrong number of arguments for seed points");
+            }
+            if (o.complement)
+                ComputeComplement(ih.Bmp, o.secondPath);
+            if(o.fourierTransform)
+                DFT2(ih.Bmp,o.secondPath);
+            if(o.fft)
+            {
+                RepresentFFTAsImage(ih.Bmp, o.secondPath);
+            }
+            if(o.lowpass != 1000)
+            {
+                LowPassFilter(ih.Bmp, o.secondPath, o.lowpass);
+            }
+            if(o.highpass != 1000)
+            {
+                HighPassFilter(ih.Bmp, o.secondPath, o.highpass);
+            }
+            if(o.bandpass.Any())
+            {
+                List<int> frequencies = new List<int>(o.bandpass);
 
+                BandPassFilter(ih.Bmp, o.secondPath, frequencies[0], frequencies[1]);
+            }
+            if(o.bandcut.Any())
+            {
+                List<int> frequencies = new List<int>(o.bandcut);
+
+                BandCutFilter(ih.Bmp, o.secondPath, frequencies[0], frequencies[1]);
+            }
+            if (o.edgehighpass.Any())
+            {
+                List<int> values = new List<int>(o.edgehighpass);
+
+                HighPassFilterWithEdgeDetection(ih.Bmp, o.secondPath, values[0], values[1]);
+            }
+            if(o.phase.Any())
+            {
+                List<int> values = new List<int>(o.phase);
+
+                PhaseModifyingFilter(ih.Bmp, o.secondPath, values[0], values[1]);
+            }
+            if (o.generateMask.Any())
+            {
+                List<int> values = new List<int>(o.generateMask);
+                generateMask(512,512,values[0],values[1], values[2]);
+            }
         }
         /// <summary>
         /// Method used solely as a helper method in ChangeBrightnessMethod().
@@ -368,7 +424,7 @@ namespace Processor
             byte[] bytesG = new byte[image.Height * image.Width];
 
             IntPtr ptr = bmpData.Scan0;
-
+   
             // Copy the RGB values into the array.
             Marshal.Copy(ptr, rgbValues, 0, image.Height * bmpData.Stride);
 
@@ -2065,7 +2121,6 @@ namespace Processor
             }
 
             res.SetPixel(x, y, Color.FromArgb(0, 0, 0));
-            ih.saveImage(res, "gówno.bmp");
 
             int iteration = 0;
             do
@@ -2078,80 +2133,889 @@ namespace Processor
 
             ih.saveImage(res, savePath);
         }
-        public static List<int> GrowRegion8(Bitmap image, int seedX, int seedY, int threshold, byte seedValue, List<int> region)
+        public static List<Pixel> GrowRegion8(Bitmap image, Pixel seed, int threshold, byte seedValue, List<Pixel> region)
         {
-            List<int> localRegion = new List<int>();
+            List<Pixel> localRegion = new List<Pixel>();
 
             for(int i = -1; i < 2; i++)
             {
-                if (seedY == 0) continue;
-                if (seedY == image.Height - 1) break;
-                for(int j = -1; j < 2; j++)
+                if (seed.Y == 0) continue;
+                if (seed.Y == image.Height - 1) break;
+                for (int j = -1; j < 2; j++)
                 {
-                    if (seedX == 0) continue;
+                    if (seed.X == 0) continue;
                     if (i == 0 && j == 0) continue;
-                    if (seedX == image.Width - 1) break;
-                    Color color = image.GetPixel(seedX + j, seedY + i);
-                    if (Math.Abs(color.R - seedValue) < threshold && !IsDuplicate(region, seedX + j, seedY + i))
+                    if (seed.X == image.Width - 1) break;
+
+                    Pixel pixel = new Pixel(seed.X + j, seed.Y + i);
+                    Color color = image.GetPixel(seed.X + j, seed.Y + i);
+
+                    if (Math.Abs(color.R - seedValue) < threshold && !IsDuplicate(region, pixel))
                     {
-                        localRegion.Add(seedX + j);
-                        localRegion.Add(seedY + i);
+                        localRegion.Add(pixel);
                     }
                 }
             }
 
             return localRegion;
         }
-        public static bool IsDuplicate(List<int> list, int x, int y)
+        public static bool IsDuplicate(List<Pixel> list, Pixel pixel)
         {
-           for(int i = 0; i < list.Count; i+=2)
-           {
-                if (list[i] == x && list[i + 1] == y)
+            foreach(Pixel p in list)
+            {
+                if (p.Equals(pixel))
                     return true;
-           }
-
+            }
             return false;
         }
-        public static void RegionGrowing(Bitmap image, string savePath)
+        public static void RegionGrowing(Bitmap image, string savePath, int threshold, List<int> seedPoints)
         {
             Bitmap res = new Bitmap(image);
-            List<int> localRegion = new List<int>();
-            List<int> region = new List<int>();
-            List<int> localRegion2 = new List<int>();
-            List<int> region2 = new List<int>();
-            region.Add(242);
-            region.Add(232);
 
-            region2.Add(476);
-            region2.Add(454);
+            List<List<Pixel>> regions = new List<List<Pixel>>();
+            List<List<Pixel>> localRegion = new List<List<Pixel>>();
+            List<List<Pixel>> finalRegions = new List<List<Pixel>>();
+            List<int> oldCounts = new List<int>();
+            List<int> newCounts = new List<int>();
+            List<Pixel> seeds = new List<Pixel>();
+
+            
+            for (int i = 0; i < seedPoints.Count; i+=2)
+            {
+                Pixel p = new Pixel(seedPoints[i], seedPoints[i + 1]);
+                regions.Add(new List<Pixel>());
+                localRegion.Add(new List<Pixel>());
+                finalRegions.Add(new List<Pixel>());
+                seeds.Add(p);
+            }
 
             int x = 0;
-            while (true)
+            int count;
+
+            while(true)
             {
-                if (x == region.Count)
+                int stopper = 0;
+                for(int w = 0; w < oldCounts.Count; w++)
+                {
+                    if (oldCounts[w] == newCounts[w])
+                        stopper++;
+                }
+                if (stopper == regions.Count)
                     break;
-                localRegion = GrowRegion8(image, region[x], region[x + 1], 50, image.GetPixel(242, 232).R, region);
-                region.AddRange(localRegion);
+                else
+                {
+                    oldCounts.Clear();
+                    newCounts.Clear();
+                }
 
-                localRegion2 = GrowRegion8(image, region2[x], region2[x + 1], 50, image.GetPixel(476, 454).R, region2);
-                region2.AddRange(localRegion2);
-
-                localRegion.Clear();
-                localRegion2.Clear();
+                for(int i = 0; i < regions.Count; i++)
+                {
+                    oldCounts.Add(regions[i].Count);
+                    if (x == 0)
+                        count = 1;
+                    else
+                        count = localRegion[i].Count;
+                    if (regions[i].Count > 1000)
+                    {
+                        int numberToRemove = (int)(regions[i].Count * 0.75);
+                        List<Pixel> holder = regions[i].ConvertAll(pixel => new Pixel(pixel));
+                        int numberToLeave = holder.Count - numberToRemove;
+                        holder.RemoveRange(numberToRemove - 1, numberToLeave);
+                        finalRegions[i].AddRange(holder);
+                        regions[i].RemoveRange(0, numberToRemove);
+                    }
+                    if(x == 0)
+                        localRegion[i].Add(seeds[i]);
+                    for (int j = 0; j < count; j++)
+                    {
+                        localRegion[i].AddRange(GrowRegion8(image, localRegion[i][j], threshold, image.GetPixel(seeds[i].X, seeds[i].Y).R, regions[i]));
+                        regions[i].AddRange(localRegion[i]);
+                    }
+                    localRegion[i].RemoveRange(0, count);
+                    newCounts.Add(regions[i].Count);
+                }
+                Console.WriteLine(x);
                 x += 2;
             }
-
-            for(int i = 0; i < region.Count; i+=2)
+            for(int i = 0; i < finalRegions.Count; i++)
             {
-                res.SetPixel(region[i], region[i + 1], Color.FromArgb(0, 0, 0));
+                finalRegions[i].AddRange(regions[i]);
             }
-
-            for (int i = 0; i < region2.Count; i += 2)
+            for (int i = 0; i < finalRegions.Count; i++)
             {
-                res.SetPixel(region2[i], region2[i + 1], Color.FromArgb(0, 0, 0));
+                for (int j = 0; j < finalRegions[i].Count; j++)
+                {
+                    res.SetPixel(finalRegions[i][j].X, finalRegions[i][j].Y, Color.FromArgb(0, 0, 0));
+                }
             }
 
             ih.saveImage(res, savePath);
         }
+
+        public static Bitmap Complement(Bitmap image)
+        {
+            int width = image.Width;
+            int height = image.Height;
+            Bitmap res = new Bitmap(width, height);
+
+            for (int x = 0; x < height; x++)
+            {
+                for (int y = 0; y < width; y++)
+                {
+                    res.SetPixel(x,y,image.GetPixel(x,y).R == 0 ? Color.White : Color.Black);
+                }
+            }
+            return res;
+        }
+        
+        public static void ComputeComplement(Bitmap image, string savePath)
+        {
+            Bitmap res;
+            res = Complement(image);
+            ih.saveImage(res,savePath);
+        }
+
+        public static Bitmap NFunctionInM5(Bitmap a, int kernelNumber)
+        {
+            return Intersection(a, Complement(Dilation(a, "", kernelNumber)), "");
+        }
+
+        public static void SFunctionInM7(Bitmap a, int kernelNumber, int k) 
+        {
+        //not finished
+            Bitmap erodedImage;
+
+            for (int x = 0; x < k; x++)
+            {
+                erodedImage = Erosion(a, "", kernelNumber);
+                a = erodedImage;
+            }
+        }
+        
+        public static void DFT(Bitmap image, string savePath)
+        {
+            int width = image.Width;
+            int height = image.Height;
+
+            Bitmap res = new Bitmap(width, height);
+
+            double[,] real = new double[height, width];
+            double[,] imaginary = new double[height, width];
+            double[,] magnitude = new double[height, width];
+
+            for (int i = 0; i < height; i++)
+            {
+                
+                for(int j = 0; j < width; j++)
+                {
+                    for(int k = 0; k < width; k++)
+                    {
+                        real[i, j] += image.GetPixel(i, k).R * Math.Cos(-2 * Math.PI * j * k / width);
+                        imaginary[i, j] += image.GetPixel(i, k).R * Math.Sin(-2 * Math.PI * j * k / width);
+                    }
+                }
+            }
+
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    double tempReal = real[i, j];
+                    double tempImaginary = imaginary[i, j];
+                    for (int k = 0; k < width; k++)
+                    {
+                        real[i, j] += tempReal * Math.Cos(-2 * Math.PI * j * k / width) - tempImaginary * Math.Sin(-2 * Math.PI * j * k / width);
+                        imaginary[i, j] += tempReal * Math.Sin(-2 * Math.PI * j * k / width) + tempImaginary * Math.Cos(-2 * Math.PI * j * k / width);
+                    }
+                }
+            }
+
+            int pixel;
+            for(int i = 0; i < height; i++)
+            {
+                for(int j = 0; j < width; j++)
+                {
+                    magnitude[i, j] = Math.Sqrt(Math.Pow(real[i, j],2) + Math.Pow(imaginary[i, j], 2));
+                    pixel = Clamp((int)magnitude[i, j]);
+                    res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
+                }
+            }
+            ih.saveImage(res, savePath);
+        }
+        public static void DFT2(Bitmap image, string savePath)
+        {
+            Bitmap res = new Bitmap(image.Width, image.Height);
+
+            int M = image.Width;
+            int N = image.Height;
+
+            double[,] magnitude = new double[N, M];
+
+            Complex[,] dft = new Complex[N, M];
+            Complex I = new Complex(0, 1);
+
+            double factor = 1 / (Math.Sqrt(N * M)); 
+
+            for (int u = 0; u < M; u++)
+            {
+                for(int v = 0; v < N; v++)
+                {
+                    for(int x = 0; x < M; x++)
+                    {
+                        for(int y = 0; y < N; y++)
+                        {
+                            double angle = 2 * Math.PI * (u * x) / M + 2 * Math.PI * (v * y) / N;
+                            dft[u, v] += Complex.Exp(-I * angle) * image.GetPixel(y, x).R * factor;
+                        }
+                    }
+                }
+            }
+            int pixel;
+            for(int i = 0; i < N; i ++)
+            {
+                for(int j = 0; j < M; j++)
+                {
+                    //magnitude[j, i] = Math.Sqrt(Math.Pow(dft[j, i].Real, 2) + Math.Pow(dft[j, i].Imaginary, 2));
+                    magnitude[j, i] = Math.Atan(dft[j, i].Imaginary / dft[j,i].Real);
+                    pixel = Clamp((int)magnitude[j, i]);
+                    res.SetPixel(i, j, Color.FromArgb(pixel, pixel, pixel));
+                }
+            }
+            ih.saveImage(res, savePath);
+        }
+        public static void RepresentFFTAsImage(Bitmap image, string savePath)
+        {
+            int width = image.Width;
+            int height = image.Height;
+            Bitmap res = new Bitmap(width, height);
+
+            Complex[,] output;
+
+            output = FFT2D(image);
+            output = SwapQuarters(output);
+
+            int pixel;
+            for (int i = 0; i < image.Height; i++)
+            {
+                for (int j = 0; j < image.Width; j++)
+                {
+                    pixel = (int)output[i, j].Magnitude;
+                    pixel = Clamp((int)Math.Log(pixel, 1.07));
+                    res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
+                }
+            }
+
+            ih.saveImage(res, savePath);
+        }
+        public static void RepresentFFTAsImage(Complex[,] fft, string savePath)
+        {
+            int width = fft.GetLength(0);
+            int height = fft.GetLength(1);
+
+            Bitmap res = new Bitmap(width, height);
+
+            int pixel;
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    pixel = (int)fft[i, j].Magnitude;
+                    pixel = Clamp((int)Math.Log(pixel, 1.07));
+                    res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
+                }
+            }
+
+            ih.saveImage(res, savePath);
+        }
+        public static Complex[] FFT(Complex[] input)
+        {
+            // Get the length of the input array
+            int n = input.Length;
+
+            Complex I = new Complex(0, 1);
+            // Check if the input has a length of 1
+            if (n == 1)
+            {
+                return input;
+            }
+
+            // Split the input into even and odd elements
+            Complex[] even = new Complex[n / 2];
+            Complex[] odd = new Complex[n / 2];
+
+            for (int i = 0; i < n; i++)
+            {
+                if (i % 2 == 0)
+                {
+                    even[i / 2] = input[i];
+                }
+                else
+                {
+                    odd[(i - 1) / 2] = input[i];
+                }
+            }
+
+            // Compute the FFT of the even and odd elements
+            Complex[] evenFFT = FFT(even);
+            Complex[] oddFFT = FFT(odd);
+
+            // Combine the FFT of the even and odd elements using the butterfly notation
+            Complex[] output = new Complex[n];
+            for (int i = 0; i < n / 2; i++)
+            {
+                Complex w = Complex.Exp(-2 * I * Math.PI * i / n);
+                output[i] = evenFFT[i] + w * oddFFT[i];
+                output[i + n / 2] = evenFFT[i] - w * oddFFT[i];
+            }
+            
+            return output;
+        }
+        public static Complex[,] FFT2D(Bitmap image)
+        {
+            int N = image.Width;
+            int M = image.Height;
+
+            Complex[,] output = new Complex[N, M];
+            Complex[,] columnsFFT = new Complex[N, M];
+
+            Complex[,] input = new Complex[N, M];
+
+            //Convert the image to table of complex numbers
+            for (int i = 0; i < image.Height; i++)
+            {
+                for (int j = 0; j < image.Width; j++)
+                {
+                    input[i, j] = image.GetPixel(j, i).R;
+                }
+            }
+
+            //Perform FFT over the columns of the input
+            for (int i = 0; i < M; i++)
+            {
+                //Put all the values from i'th column in the tempColumn variable
+                var tempColumn = new Complex[N];
+                for(int j = 0; j < N; j++)
+                {
+                    tempColumn[j] = input[j, i];    
+                }
+                //Calculate the FFT of i'th column
+                tempColumn = FFT(tempColumn);
+                //Assign the column to columnsFFT, after calculating its FFT
+                for(int z = 0; z < N; z++)
+                {
+                    columnsFFT[z, i] = tempColumn[z];
+                }
+            }
+
+            //Perform FFT over the rows of the columnsFFT
+            for(int i = 0; i < N; i++)
+            {
+                //Put the values from i'th row in tempRow, so we can perform the FFT on its entirety 
+                var tempRow = new Complex[M];
+                for(int j = 0; j < M; j++)
+                {
+                    tempRow[j] = columnsFFT[i, j];
+                }
+                //Calculate the FFT on tempRow
+                tempRow = FFT(tempRow);
+                //Assign the tempRow to the output
+                for(int z = 0; z < M; z++)
+                {
+                    if (i == 0)
+                        Console.WriteLine(tempRow[z].Real);
+                    output[i, z] = tempRow[z];
+                }
+            }
+
+            return output;
+        }
+
+        public static Complex[] IFFT(Complex[] input)
+        {
+            Complex n = new Complex(input.Length, 0);
+            Complex buffer;
+            
+            ///Compute Forward FFT
+            Complex[] transformed = FFT(input);
+            
+            ///Divide each result by N (amount of elements)
+            for (int x = 0; x < transformed.Length; x++)
+            {
+                transformed[x] = Complex.Divide(transformed[x], n);
+            }
+            
+            ///Reverse elements in the array omitting the first one 
+            for (int x = 1; x < transformed.Length / 2; x++)
+            {
+                buffer = transformed[transformed.Length - x];
+                transformed[input.Length - x] = new Complex(transformed[x].Real,transformed[x].Imaginary);
+                transformed[x] = buffer;
+            }
+            
+            return transformed;
+        }
+
+        public static Complex[,] IFFT2D(Complex[,] input)
+        {
+            int N = input.GetLength(0);
+            int M = input.GetLength(1);
+            
+            Complex[,] output = new Complex[N, M];
+            Complex[,] columnsInverseFFT = new Complex[N, M];
+            
+            //Perform IFFT over the columns of the input
+            for(int i = 0; i < M; i++)
+            {
+                //Put all the values from i'th column in the tempColumn variable
+                var tempColumn = new Complex[N];
+                for(int j = 0; j < N; j++)
+                {
+                    tempColumn[j] = input[j, i];    
+                }
+                //Calculate the IFFT of i'th column
+                tempColumn = IFFT(tempColumn);
+                //Assign the column to columns IFFT, after calculating its IFFT
+                for(int z = 0; z < N; z++)
+                {
+                    columnsInverseFFT[z, i] = tempColumn[z];
+                }
+            }
+            
+            //Perform IFFT over the rows of the columns IFFT
+            for(int i = 0; i < N; i++)
+            {
+                //Put the values from i'th row in tempRow, so we can perform the IFFT on its entirety 
+                var tempRow = new Complex[M];
+                for(int j = 0; j < M; j++)
+                {
+                    tempRow[j] = columnsInverseFFT[i, j];
+                }
+                //Calculate the IFFT on tempRow
+                tempRow = IFFT(tempRow);
+                //Assign the tempRow to the output
+                for(int z = 0; z < M; z++)
+                {
+                    output[i, z] = tempRow[z];
+                }
+            }
+
+            return output;
+        }
+        public static Complex[,] SwapQuarters(Complex[,] fft)
+        {
+            int width = fft.GetLength(0);
+            int height = fft.GetLength(1);
+
+            Complex[,] output = new Complex[width, height];
+
+            int quarterWidth = width / 2;
+            int quarterHeight = height / 2; 
+
+            Complex[,] q1 = new Complex[quarterHeight, quarterWidth];
+            Complex[,] q2 = new Complex[quarterHeight, quarterWidth];
+            Complex[,] q3 = new Complex[quarterHeight, quarterWidth];
+            Complex[,] q4 = new Complex[quarterHeight, quarterWidth];
+
+            for( int i = 0; i < quarterHeight; i++)
+            {
+                for( int j = 0; j < quarterWidth; j++)
+                {
+                    q1[i, j] = fft[i, j];
+                    q2[i, j] = fft[i, j + quarterWidth];
+                    q3[i, j] = fft[i + quarterHeight, j];
+                    q4[i, j] = fft[i + quarterHeight, j + quarterWidth];
+                }
+            }
+
+            for (int i = 0; i < quarterHeight; i++)
+            {
+                for (int j = 0; j < quarterWidth; j++)
+                {
+                    output[i, j] = q4[i, j];
+                    output[i + quarterHeight, j + quarterWidth] = q1[i, j];
+                    output[i + quarterHeight, j] = q2[i, j];
+                    output[i, j + quarterWidth] = q3[i, j];
+                }
+            }
+
+            return output;
+        }
+        public static Bitmap RepresentIFFTAsImage(Complex[,] input, string savePath)
+        {
+            int width = input.GetLength(0);
+            int height = input.GetLength(1);
+
+            Bitmap res = new Bitmap(width, height);
+
+            Complex[,] output;
+
+            output = IFFT2D(input);
+
+            int pixel;
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    pixel = (int)output[i, j].Magnitude;
+                    res.SetPixel(j, i, Color.FromArgb(pixel, pixel, pixel));
+                }
+            }
+            ih.saveImage(res, savePath);
+            return res;
+        }
+        public static void LowPassFilter(Bitmap image, string savePath, int cutOff)
+        {
+            Complex[,] fft = FFT2D(image);
+            fft = SwapQuarters(fft);
+
+            int width = fft.GetLength(0);
+            int height = fft.GetLength(1);
+
+            for(int i = 0; i < height; i++)
+            {
+                for(int j = 0; j < width; j++)
+                {
+                    double distance = Math.Sqrt(
+                        Math.Pow((i - height / 2), 2) +
+                        Math.Pow((j - width / 2), 2)
+                        );
+
+                    if(distance > cutOff)
+                    {
+                        fft[i, j] = new Complex(0, fft[i, j].Phase);
+                    }
+                }
+            }
+            RepresentIFFTAsImage(fft, savePath);
+        }
+        private static void HighPassFilter(Bitmap image, string savePath, int cutOff)
+        {
+            Complex[,] fft = FFT2D(image);
+            fft = SwapQuarters(fft);
+
+            int width = fft.GetLength(0);
+            int height = fft.GetLength(1);
+
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    double distance = Math.Sqrt(
+                        Math.Pow((i - height / 2), 2) +
+                        Math.Pow((j - width / 2), 2)
+                        );
+
+                    if (distance <= cutOff)
+                    {
+                        fft[i, j] = new Complex(0, fft[i, j].Phase);
+                    }
+                }
+            }
+            RepresentIFFTAsImage(fft, savePath);
+        }
+        private static void BandPassFilter(Bitmap image, string savePath, int lowFrequencyThreshold, int highFrequencyThreshold)
+        {
+            Complex[,] fft = FFT2D(image);
+            fft = SwapQuarters(fft);
+
+            int width = fft.GetLength(0);
+            int height = fft.GetLength(1);
+
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    double distance = Math.Sqrt(
+                        Math.Pow((i - height / 2), 2) +
+                        Math.Pow((j - width / 2), 2)
+                        );
+
+                    if (distance < lowFrequencyThreshold || distance > highFrequencyThreshold)
+                    {
+                        fft[i, j] = new Complex(0, 0);
+                    }
+                }
+            }
+            RepresentIFFTAsImage(fft, savePath);
+        }
+        private static void BandCutFilter(Bitmap image, string savePath, int lowFrequencyThreshold, int highFrequencyThreshold)
+        {
+            Complex[,] fft = FFT2D(image);
+            fft = SwapQuarters(fft);
+
+            int width = fft.GetLength(0);
+            int height = fft.GetLength(1);
+
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    double distance = Math.Sqrt(
+                        Math.Pow((i - height / 2), 2) +
+                        Math.Pow((j - width / 2), 2)
+                        );
+
+                    if (distance >= lowFrequencyThreshold && distance <= highFrequencyThreshold)
+                    {
+                        fft[i, j] = new Complex(0, 0);
+                    }
+                }
+            }
+            RepresentIFFTAsImage(fft, savePath);
+        }
+        public static void HighPassFilterWithEdgeDetection(Bitmap image, string savePath, int maskNumber, int threshold)
+        {
+            EdgeMask maskGenerator = new EdgeMask();
+            Bitmap mask = maskGenerator.GetMask(maskNumber);
+
+            Complex[,] fft = FFT2D(image);
+            fft = SwapQuarters(fft);
+
+            int width = fft.GetLength(0);
+            int height = fft.GetLength(1);
+
+            for (int i = 0; i < height; i++)
+            {
+                for (int j = 0; j < width; j++)
+                {
+                    double distance = Math.Sqrt(
+                        Math.Pow((i - height / 2), 2) +
+                        Math.Pow((j - width / 2), 2)
+                        );
+                    if(mask.GetPixel(j, i).R == 0)
+                    {
+                        fft[i, j] = new Complex(0, 0);
+                    }
+                    else if(distance < threshold)
+                    {
+                        fft[i, j] = new Complex(0, 0);
+                    }
+
+                }
+            }
+            RepresentIFFTAsImage(fft, savePath);
+        }
+        public static Complex[,] CalculatePhaseMask(int width, int height, int k, int l)
+        {
+            Complex[,] mask = new Complex[width, height];
+            Complex I = new Complex(0, 1);
+
+            for(int i = 0; i < height; i++)
+            {
+                for(int j = 0; j < width; j++)
+                {
+                    mask[i, j] = Complex.Exp(I * (((-1) * (i * k * 2 * Math.PI) / height) +
+                        ((-1) * (j * l * 2 * Math.PI) / width) + 
+                        (k + l) * Math.PI));
+                }
+            }
+            return mask;
+        }
+        public static void PhaseModifyingFilter(Bitmap image, string savePath, int k, int l)
+        {
+            int width = image.Width;
+            int height = image.Height;
+
+            Complex[,] mask = CalculatePhaseMask(width, height, k, l);
+            Complex[,] fft = FFT2D(image);
+
+            fft = SwapQuarters(fft);
+
+            for(int i = 0; i < height; i++)
+            {
+                for(int j = 0; j < width; j++)
+                {
+                    fft[i, j] *= mask[i, j];
+                }
+            }
+
+            RepresentFFTAsImage(fft, savePath);
+        }
+
+        /// <summary>
+        /// Generates mask with a specified radius of a circle and angle between the straight lines. It's possible to rotate the mask.
+        /// </summary>
+        public static void generateMask(int width, int height, int circleRadius, int angle, int rotationAngle)
+        {
+            Bitmap bmp = new Bitmap(width, height);
+            for(int x = 0; x <  width; x++)
+            for (int y = 0; y < height; y++)
+            {
+                bmp.SetPixel(x,y,Color.Black);
+            }
+            // Create a graphics object from the bitmap
+            Graphics g = Graphics.FromImage(bmp);
+            
+            // Set the smoothing mode for the graphics object
+            g.SmoothingMode = SmoothingMode.AntiAlias;
+
+            // Calculate the start and end points of the lines
+            int halfDistanceBetweenPoints = (int)(Math.Tan( (Math.PI / 180) * angle / 2) * width / 2);
+            Point left2 = new Point(0, height / 2 - halfDistanceBetweenPoints);
+            Point right1 = new Point(width, height / 2 + halfDistanceBetweenPoints );
+            Point left1 = new Point(0, height / 2 + halfDistanceBetweenPoints );
+            Point right2 = new Point(width, height / 2 - halfDistanceBetweenPoints);
+
+            double tanAlfa = Math.Round((double)(height / 2) / (width / 2),2 ,MidpointRounding.ToEven);
+            double tanBeta = Math.Round((double)(width / 2) / (height / 2),2 ,MidpointRounding.ToEven);
+            int alfaAngle = 0, betaAngle = 0;
+            for (int x = 0; x < 90; x++)
+            {
+                if (Math.Round(Math.Tan((Math.PI / 180) * x), 2, MidpointRounding.ToEven) == tanAlfa)
+                {
+                    alfaAngle = x;
+                }
+                
+                if (Math.Round(Math.Tan((Math.PI / 180) * x), 2, MidpointRounding.ToEven) == tanBeta)
+                {
+                    betaAngle = x;
+                }
+            }
+
+            float verticalDistanceToChangeAngleByOne = ((float)height / 2)/ alfaAngle;
+            float horizontalDistanceToChangeAngleByOne = ((float)width /2) / betaAngle;
+            
+            // First right point vertical repositioning
+            float verticalDistanceLeft = height/2 - halfDistanceBetweenPoints;
+            float verticalRotation = (verticalDistanceLeft / verticalDistanceToChangeAngleByOne);
+
+            Console.WriteLine(left1.X + " " + left1.Y);
+            Console.WriteLine(left2.X + " " + left2.Y);
+            if (rotationAngle < verticalRotation)
+            {
+                right1.Y = (int)(right1.Y + rotationAngle * verticalDistanceToChangeAngleByOne);
+            }
+            else if (rotationAngle > verticalRotation)
+            {
+                right1.Y = (int)(right1.Y + verticalRotation * verticalDistanceToChangeAngleByOne);
+                float remainingRotationAngle = (rotationAngle - verticalRotation);
+                
+                // First right point horizontal repositioning
+                right1.X = (int)(right1.X - remainingRotationAngle * horizontalDistanceToChangeAngleByOne);
+
+            }
+            
+            // Second right point vertical repositioning
+            verticalDistanceLeft = height / 2 + halfDistanceBetweenPoints;
+            verticalRotation = (verticalDistanceLeft / verticalDistanceToChangeAngleByOne);
+            
+            if (rotationAngle < verticalRotation)
+            {
+                right2.Y = (int)(right2.Y + rotationAngle * verticalDistanceToChangeAngleByOne);
+            }
+            else if (rotationAngle > verticalRotation)
+            {
+                right2.Y = (int)(right2.Y + verticalRotation * verticalDistanceToChangeAngleByOne);
+                float remainingRotationAngle = (rotationAngle - verticalRotation);
+                
+                // Second right point horizontal repositioning       
+                right2.X = (int)(right2.X - remainingRotationAngle * horizontalDistanceToChangeAngleByOne);
+            }
+            
+            // First left point vertical repositioning
+            verticalDistanceLeft = height / 2  + halfDistanceBetweenPoints;
+            verticalRotation = (verticalDistanceLeft / verticalDistanceToChangeAngleByOne);
+            
+            if (rotationAngle < verticalRotation)
+            {
+                left1.Y = (int)(left1.Y - rotationAngle * verticalDistanceToChangeAngleByOne);
+            }
+            else if (rotationAngle > verticalRotation)
+            {
+                left1.Y = (int)(left1.Y - verticalRotation * verticalDistanceToChangeAngleByOne);
+                float remainingRotationAngle = rotationAngle - verticalRotation;
+                
+                // First left point horizontal repositioning       
+                left1.X = (int)(left1.X + remainingRotationAngle * horizontalDistanceToChangeAngleByOne);
+            }
+            
+            // Second left point vertical repositioning
+            verticalDistanceLeft = height / 2  - halfDistanceBetweenPoints;
+            verticalRotation = (verticalDistanceLeft / verticalDistanceToChangeAngleByOne);
+            
+            if (rotationAngle < verticalRotation)
+            {
+                left2.Y = (int)(left2.Y - rotationAngle * verticalDistanceToChangeAngleByOne);
+            }
+            else if (rotationAngle > verticalRotation)
+            {
+                left2.Y = (int)(left2.Y - verticalRotation * verticalDistanceToChangeAngleByOne);
+                float remainingRotationAngle = rotationAngle - verticalRotation;
+                
+                // Second left point horizontal repositioning       
+                left2.X = (int)(left2.X + remainingRotationAngle * horizontalDistanceToChangeAngleByOne);
+            }
+            
+            Console.WriteLine(left1.X + " " + left1.Y);
+            Console.WriteLine(left2.X + " " + left2.Y);
+            Point fourthPoint = new Point(-1, -1);
+            Point[] firstShape;
+            Point[] secondShape;
+            // Check if one of the points is on the other axis
+            if (right1.Y == right2.X && right1.X != right2.X)
+            {
+                // In that case create 4th point to fill the resulting space
+                if (right1.Y == height && right2.X == width)
+                {
+                    fourthPoint = new Point(width, height);
+                    firstShape = new Point[]{ new Point(width / 2, height / 2), right1, fourthPoint, right2};
+                }
+                else if (right1.X == 0 && right2.Y == height)
+                {
+                    fourthPoint = new Point(0, height);
+                    firstShape = new Point[]{ new Point(width / 2, height / 2), right1, fourthPoint, right2};
+                }
+                else
+                {
+                    firstShape = new Point[]{ new Point(width / 2, height / 2), right1, right2};
+                }
+                if (left2.Y == 0 && left1.X == 0)
+                {
+                    
+                    fourthPoint = new Point(0, 0);
+                    secondShape = new Point[]{ new Point(width / 2, height / 2), left1, fourthPoint, left2};
+                }
+                else
+                {
+                    secondShape = new Point[] { new Point(width / 2, height / 2), left2, left1 };
+                }
+              
+              
+            }
+            else
+            {
+                  firstShape = new Point[]{ new Point(width / 2, height / 2), right1, right2 };
+                  secondShape = new Point[] { new Point(width / 2, height / 2), left2, left1 };
+            }
+            
+            // Rotate the polygons
+            CoordinateSpace a;
+            // g.TranslateTransform(width / 2, height / 2);
+            // g.RotateTransform(rotationAngle);
+            // g.TranslateTransform(-width / 2, -height / 2);
+            
+            Pen pen = new Pen(Color.White, 2);
+
+            Brush whiteBrush = new SolidBrush(Color.White);
+
+            g.FillPolygon(whiteBrush,firstShape);
+            g.FillPolygon(whiteBrush,secondShape);
+            g.FillEllipse(Brushes.Black, new Rectangle(width/2 - circleRadius/2, height/2 - circleRadius/2, circleRadius, circleRadius));
+            // Draw the lines
+       
+            // g.TranslateTransform(width / 2, height / 2);
+            // g.TranslateTransform(-width / 2, -height / 2);
+            
+            bmp.Save("Result",System.Drawing.Imaging.ImageFormat.Bmp);
+            
+            // Save the bitmap to a file
+            ih.saveImage(bmp,"result.bmp");
+
+            // Clean up
+            g.Dispose();
+            bmp.Dispose();
+        
+        }
+
     }
 }

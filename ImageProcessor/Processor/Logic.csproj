@@ -39,6 +39,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -52,6 +53,8 @@
     <Compile Include="ImageHandler.cs" />
     <Compile Include="ImageProcessor.cs" />
     <Compile Include="Kernel.cs" />
+    <Compile Include="EdgeMask.cs" />
+    <Compile Include="Pixel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
